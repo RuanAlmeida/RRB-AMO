@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="pt-BR" data-tema="claro">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Copiloto Médico de Insights</title>
+  <meta name="description" content="Copiloto de apoio à decisão em atenção primária. Dados sintéticos, sem diagnóstico nem prescrição.">
+  <link rel="stylesheet" href="styles/fontes.css">
+  <link rel="stylesheet" href="styles/tokens.css">
+  <link rel="stylesheet" href="styles/app.css">
+</head>
+<body>
+  <div class="app">
+
+    <!-- Barra lateral fixa -->
+    <aside class="sidebar">
+      <div class="marca">
+        <p class="marca__nome">Copiloto de Insights Clínicos</p>
+        <p class="marca__sub">Apoio à decisão humana, sem diagnóstico nem prescrição</p>
+      </div>
+
+      <nav class="nav" aria-label="Telas do copiloto">
+        <button class="nav__item" type="button" data-tela="analise">Análise da consulta</button>
+        <button class="nav__item" type="button" data-tela="dashboard">Dashboard populacional</button>
+        <button class="nav__item" type="button" data-tela="retorno">Retorno ao paciente</button>
+      </nav>
+
+      <div class="sidebar__rodape">
+        <div class="contexto" aria-label="Paciente em atendimento">
+          <p class="contexto__titulo">Paciente em atendimento</p>
+          <p class="contexto__nome" id="ctx-nome">Carregando</p>
+          <p class="contexto__meta" id="ctx-meta"></p>
+          <p class="contexto__aviso">Registro sintético, dado de demonstração</p>
+        </div>
+        <button class="btn btn--fantasma tema-btn" type="button" id="btn-tema">Usar modo escuro</button>
+        <button class="btn btn--fantasma" type="button" id="btn-reiniciar">Reiniciar demonstração</button>
+      </div>
+    </aside>
+
+    <!-- Área principal -->
+    <main class="principal">
+
+      <!-- Tela 1: Análise da consulta -->
+      <section class="tela" id="tela-analise">
+        <header class="tela__cabecalho">
+          <h1 class="tela__titulo">Análise da consulta</h1>
+          <p class="tela__contexto">
+            Cruzamos o prontuário sintético e a transcrição simulada com a base controlada.
+            Cada ponto de atenção mostra de onde veio e só avança com validação sua.
+          </p>
+        </header>
+
+        <div class="grade grade--dois">
+          <section class="painel" id="painel-prontuario" aria-label="Prontuário sintético"></section>
+          <section class="painel" id="painel-transcricao" aria-label="Transcrição simulada"></section>
+        </div>
+
+        <section class="painel" id="painel-insights" aria-label="Pontos de atenção">
+          <div class="painel__cabecalho">
+            <h2 class="painel__titulo">Pontos de atenção</h2>
+            <button class="btn btn--primario" type="button" id="btn-analisar">Analisar consulta</button>
+          </div>
+          <p class="painel__nota" id="analise-estado">
+            Ainda não executamos o cruzamento. Rode a análise para gerar os pontos
+            de atenção com fonte rastreável.
+          </p>
+
+          <div class="barra-status" id="barra-status" hidden></div>
+          <div class="filtros" id="filtros" hidden role="group" aria-label="Filtrar pontos de atenção"></div>
+          <div class="lista-insights" id="lista-insights">
+            <div class="vazio">
+              <p class="vazio__texto">Nenhum ponto de atenção gerado até aqui.</p>
+            </div>
+          </div>
+        </section>
+      </section>
+
+      <!-- Tela 2: Dashboard populacional -->
+      <section class="tela" id="tela-dashboard" hidden>
+        <header class="tela__cabecalho">
+          <h1 class="tela__titulo">Dashboard populacional</h1>
+          <p class="tela__contexto">
+            Agrega exames e consultas recebidos na rede sintética de demonstração.
+            Serve para leitura de gestão, nunca para decidir conduta de paciente.
+          </p>
+        </header>
+
+        <div class="aviso-simulado" role="note">
+          <p class="aviso-simulado__titulo">Números simulados, uso ilustrativo.</p>
+          <p>
+            Todos os valores desta tela vêm de registros sintéticos criados para a demonstração.
+            Nenhum número representa paciente real e nenhum elemento desta tela aciona ação
+            automática: o dashboard informa, a decisão é de quem lê.
+          </p>
+        </div>
+
+        <div class="kpis" id="kpis"></div>
+
+        <section class="painel" aria-label="Série temporal de exames">
+          <div class="painel__cabecalho">
+            <h2 class="painel__titulo">Exames recebidos por mês</h2>
+            <span class="selo selo--simulado">Série sintética</span>
+          </div>
+          <p class="painel__nota" id="serie-nota"></p>
+          <div class="grafico" id="grafico"></div>
+          <p class="painel__nota" id="serie-legenda"></p>
+        </section>
+
+        <section class="painel" aria-label="Tabela de leitura para gestão">
+          <div class="painel__cabecalho">
+            <h2 class="painel__titulo">Leitura para gestão</h2>
+            <span class="selo selo--simulado">Valores simulados</span>
+          </div>
+          <p class="painel__nota">
+            A coluna de leitura interpretativa existe porque o valor do dashboard é apoiar
+            decisão humana, não só exibir número.
+          </p>
+          <div class="tabela-rolagem">
+            <table class="tabela" id="tabela-gestao"></table>
+          </div>
+        </section>
+
+        <p class="nota-rodape">
+          Dados de demonstração, sem qualquer vínculo com prontuário real. Alteração de escala,
+          equipe ou agenda não acontece por esta tela: quem decide é a gestão, com registro.
+        </p>
+      </section>
+
+      <!-- Tela 3: Retorno ao paciente -->
+      <section class="tela" id="tela-retorno" hidden>
+        <header class="tela__cabecalho">
+          <h1 class="tela__titulo">Retorno ao paciente</h1>
+          <p class="tela__contexto">
+            Resumo gerado a partir desta consulta, editável por você. Nada segue para a pessoa
+            sem a sua validação explícita nesta tela.
+          </p>
+        </header>
+
+        <ol class="etapas" id="etapas">
+          <li class="etapa etapa--ativo" data-etapa="1">
+            <span class="etapa__num">1</span>
+            <span class="etapa__texto">Rascunho editável</span>
+          </li>
+          <li class="etapa" data-etapa="2">
+            <span class="etapa__num">2</span>
+            <span class="etapa__texto">Validação do profissional</span>
+          </li>
+          <li class="etapa" data-etapa="3">
+            <span class="etapa__num">3</span>
+            <span class="etapa__texto">Registro de envio assistido</span>
+          </li>
+        </ol>
+
+        <section class="painel" aria-label="Resumo para a paciente">
+          <div class="painel__cabecalho">
+            <h2 class="painel__titulo">Resumo gerado a partir da consulta</h2>
+            <span class="selo selo--pendente" id="retorno-status">Rascunho, não enviado</span>
+          </div>
+          <p class="painel__nota">
+            Gerado a partir do prontuário, da transcrição e dos pontos de atenção que você aceitou.
+            Edite o texto como faria com qualquer nota antes de validar.
+          </p>
+
+          <label class="rotulo-campo" for="retorno-texto">Texto do resumo</label>
+          <textarea class="campo-texto" id="retorno-texto" rows="26" spellcheck="false"></textarea>
+
+          <div class="erro" id="retorno-erro" hidden role="alert"></div>
+
+          <details class="regras">
+            <summary>O que o sistema bloqueia na validação</summary>
+            <ul class="regras__lista">
+              <li>Nome de medicamento acompanhado de quantidade, como “tomar 500 mg”.</li>
+              <li>Palavras de prescrição: dose, dosagem, posologia, prescrição.</li>
+              <li>Formas farmacêuticas soltas: comprimido, cápsula, gotas.</li>
+              <li>Orientação automática de conduta, como “procure o hospital agora”.</li>
+            </ul>
+            <p class="regras__nota">
+              O copiloto não recomenda medicação nem conduta em nenhuma tela deste produto.
+            </p>
+          </details>
+
+          <div class="acoes-painel">
+            <button class="btn btn--secundario" type="button" id="btn-gerar">Gerar resumo a partir da consulta</button>
+          </div>
+        </section>
+
+        <section class="painel" aria-label="Validação do profissional">
+          <div class="painel__cabecalho">
+            <h2 class="painel__titulo">Validação do profissional</h2>
+          </div>
+          <p class="painel__nota">
+            Enviar sem revisão não existe neste produto. O envio real de mensagem está fora do
+            escopo desta demonstração: após validar, o registro fica aqui como preparado para o
+            canal assistido.
+          </p>
+
+          <label class="checkbox">
+            <input type="checkbox" id="chk-revisao">
+            <span>Revisei o texto. Ele informa a paciente sem recomendar medicação nem conduta automática.</span>
+          </label>
+
+          <div class="acoes-painel">
+            <button class="btn btn--primario" type="button" id="btn-validar">Validar e enviar</button>
+          </div>
+
+          <div class="guardrail">
+            <p class="guardrail__titulo">Limite do copiloto</p>
+            <p>
+              Esta tela monta e registra um resumo. Não existe, em nenhum ponto do produto,
+              geração de diagnóstico, prescrição ou orientação automática direcionada à paciente.
+            </p>
+          </div>
+
+          <h3 class="subtitulo">Histórico de validação</h3>
+          <ul class="log" id="retorno-log">
+            <li class="log__vazio">Nenhuma validação registrada até aqui.</li>
+          </ul>
+        </section>
+
+        <p class="nota-rodape">
+          Envio real por WhatsApp ou outro canal está fora do escopo desta demonstração,
+          documentado como pendência junto à conformidade LGPD.
+        </p>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- Ordem importa: dados, motor de recuperação, motor de insights, telas -->
+  <script src="scripts/data/prontuario.js"></script>
+  <script src="scripts/data/transcricao.js"></script>
+  <script src="scripts/data/base-controlada.js"></script>
+  <script src="scripts/data/dashboard.js"></script>
+  <script src="scripts/engine/rag.js"></script>
+  <script src="scripts/engine/insights.js"></script>
+  <script src="scripts/ui/util.js"></script>
+  <script src="scripts/ui/analise.js"></script>
+  <script src="scripts/ui/dashboard.js"></script>
+  <script src="scripts/ui/retorno.js"></script>
+  <script src="scripts/app.js"></script>
+</body>
+</html>

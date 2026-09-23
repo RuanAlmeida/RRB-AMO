@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <title>Shots</title>
+  <style>
+    body { margin: 0; padding: 16px; background: #E9ECE9; }
+    iframe { width: 1380px; height: 2240px; border: 1px solid #D7DDD8; display: block; }
+  </style>
+</head>
+<body>
+  <h1 style="font: 600 16px system-ui; margin: 8px 0 12px;">Captura de telas</h1>
+  <iframe id="app"></iframe>
+
+  <script>
+    /* Harness de captura: ?hash=analise|dashboard|retorno, ?analisar=1,
+       ?scroll=<id do elemento>|bloqueado, ?tema=claro|escuro (padrão claro,
+       porque o Chrome headless nasce no modo escuro). */
+    var p = new URLSearchParams(location.search);
+    var frame = document.getElementById("app");
+    frame.src = "../index.html?sem-estado=1" + (p.get("hash") ? "#" + p.get("hash") : "");
+
+    frame.addEventListener("load", function () {
+      var fd = frame.contentDocument;
+      var fc = frame.contentWindow;
+      try {
+        var temaDesejado = p.get("tema") === "escuro" ? "escuro" : "claro";
+        if (fd.documentElement.getAttribute("data-tema") !== temaDesejado) {
+          fd.getElementById("btn-tema").click();
+        }
+        if (p.get("analisar") === "1") {
+          fd.getElementById("btn-analisar").click();
+        }
+        var alvo = p.get("scroll");
+        if (alvo === "bloqueado") {
+          var b = fd.querySelector(".insight--bloqueado");
+          if (b) b.scrollIntoView();
+        } else if (alvo) {
+          var el = fd.getElementById(alvo);
+          if (el) el.scrollIntoView();
+        }
+        document.title = "SHOTS OK";
+      } catch (e) {
+        document.title = "SHOTS FAIL " + e;
+      }
+      var aviso = document.createElement("p");
+      aviso.style.font = "13px system-ui";
+      aviso.textContent = document.title;
+      document.body.insertBefore(aviso, document.body.firstChild);
+    });
+  </script>
+</body>
+</html>

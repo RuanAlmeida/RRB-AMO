@@ -1,0 +1,65 @@
+/* ============================================================
+   Copiloto Médico de Insights — tokens de design
+   Superfície fria, tinta quase-preta verde-azulada, um acento
+   de confiança e cores de sinalização clínica com significado fixo.
+   ============================================================ */
+
+:root {
+  /* Paleta base */
+  --bg: #E9ECE9;
+  --ink: #16211C;
+  --muted: #5C655F;
+  --primary: #1B4B66;
+  --primary-ink: #FFFFFF;
+  --line: #D7DDD8;
+  --panel: #FFFFFF;
+
+  /* Sinalização clínica — significado fixo em todo o produto */
+  --amber: #A9721F;
+  --amber-bg: #FBF1E0;
+  --red: #9C3E37;
+  --red-bg: #F7E9E7;
+  --green: #2F6B4F;
+  --green-bg: #E7F0EA;
+
+  /* Forma: cantos quase retos, como formulário impresso */
+  --raio-painel: 6px;
+  --raio-controle: 4px;
+
+  /* Escala tipográfica: 6 tamanhos, sem intermediários */
+  --t-1: 0.75rem;
+  --t-2: 0.85rem;
+  --t-3: 0.95rem;
+  --t-4: 1.1rem;
+  --t-5: 1.5rem;
+  --t-6: 2rem;
+
+  --fonte-titulo: "Source Serif 4", Georgia, "Times New Roman", serif;
+  --fonte-ui: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+
+  /* Blocos de leitura ficam abaixo de 80 caracteres por linha */
+  --largura-leitura: 68ch;
+
+  --sidebar-largura: 252px;
+  --area-largura: 980px;
+}
+
+/* Modo escuro: inverte a luminância, mantém a função semântica
+   de cada token (âmbar continua atenção, vermelho continua
+   bloqueado, verde continua confirmado). */
+[data-tema="escuro"] {
+  --bg: #131715;
+  --ink: #E6EAE6;
+  --muted: #A2ABA4;
+  --primary: #7FB4D4;
+  --primary-ink: #10222D;
+  --line: #2E352F;
+  --panel: #1B211D;
+
+  --amber: #E3AC57;
+  --amber-bg: #332916;
+  --red: #E3938B;
+  --red-bg: #33211F;
+  --green: #86C6A1;
+  --green-bg: #1D2C24;
+}

@@ -1,0 +1,354 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <title>Smoke test</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 20px; }
+    iframe { width: 1200px; height: 800px; border: 1px solid #ccc; }
+    li.pass { color: #2F6B4F; }
+    li.fail { color: #9C3E37; font-weight: 600; }
+    li.diag { color: #5C655F; font-family: monospace; font-size: 13px; }
+  </style>
+</head>
+<body>
+  <h1 id="titulo">Smoke test — Copiloto de Insights Clínicos</h1>
+  <ul id="saidas"></ul>
+  <iframe id="app" src="../index.html"></iframe>
+
+  <script>
+    var resultados = [];
+
+    function check(cond, nome, detalhe) {
+      var ok = !!cond;
+      resultados.push((ok ? "PASS" : "FAIL") + " " + nome);
+      var li = document.createElement("li");
+      li.className = ok ? "pass" : "fail";
+      li.textContent = (ok ? "PASS" : "FAIL") + " — " + nome + (detalhe ? " (" + detalhe + ")" : "");
+      document.getElementById("saidas").appendChild(li);
+      console.log((ok ? "PASS" : "FAIL") + " " + nome + (detalhe ? " " + detalhe : ""));
+    }
+
+    function diag(texto) {
+      var li = document.createElement("li");
+      li.className = "diag";
+      li.textContent = "DIAG " + texto;
+      document.getElementById("saidas").appendChild(li);
+      console.log("DIAG " + texto);
+    }
+
+    function run(w, d) {
+      try {
+        var q = function (sel) { return d.querySelector(sel); };
+        var qa = function (sel) { return Array.prototype.slice.call(d.querySelectorAll(sel)); };
+
+        /* ---------- Tela 1: análise da consulta ---------- */
+        var ctx = d.getElementById("ctx-nome").textContent;
+        check(ctx.indexOf("Helena") >= 0, "sidebar mostra paciente ativo", ctx);
+
+        d.getElementById("btn-analisar").click();
+
+        var cards = qa(".insight");
+        var pend = qa(".insight--pendente");
+        var bloq = qa(".insight--bloqueado");
+
+        diag("regras no motor=" + CM_regras(w) +
+             " gerados=" + cards.length +
+             " pendentes=" + pend.length +
+             " bloqueados=" + bloq.length);
+        diag("cartões: " + cards.map(function (c) {
+          var id = c.getAttribute("data-id") || "?";
+          var st = (c.className.match(/insight--([a-z]+)/) || [])[1] || "?";
+          return id + ":" + st;
+        }).join(", "));
+
+        /* diagnóstico da regra que não disparou (PT-01) */
+        try {
+          var r0 = w.CM.insights.REGRAS[0];
+          diag("regra0=" + r0.id + " exigencias=" + String(r0.exigencias.transcricao) + " / " + String(r0.exigencias.prontuario));
+          diag("PT-01 transc hits: " + w.CM.data.transcricao.trechos.map(function (x, i) {
+            var h1 = /pontada no peito/i.test(x.texto) ? "S" : "-";
+            var h2 = /subo a escada/i.test(x.texto) ? "S" : "-";
+            return i + h1 + h2;
+          }).join(" "));
+          diag("PT-01 hist hits: " + w.CM.data.prontuario.historico.map(function (h, i) {
+            return i + (/dor tor[áa]cica/i.test(h.evento) ? "S" : "-");
+          }).join(" "));
+
+          var ev0 = w.CM.data.prontuario.historico[0].evento;
+          var ixDor = ev0.indexOf("dor");
+          var patEng = w.CM.insights.REGRAS[0].exigencias.prontuario[0];
+          var codigos = function (s) {
+            return s.split("").map(function (c) { return c.charCodeAt(0); }).join(",");
+          };
+          diag("evento0: " + JSON.stringify(ev0.slice(ixDor, ixDor + 16)) +
+               " codes=" + codigos(ev0.slice(ixDor, ixDor + 16)));
+          diag("padrao engine: " + String(patEng) + " sourceCodes=" + codigos(String(patEng.source)));
+          diag("engineTestaEvento0=" + patEng.test(ev0) +
+               " literalSmoke=" + /dor tor[áa]cica/i.test(ev0) +
+               " literalCodes=" + codigos("dor tor[áa]cica"));
+        } catch (e2) {
+          diag("diagnóstico falhou: " + e2);
+        }
+
+        check(cards.length === CM_regras(w), "todas as regras do motor dispararam",
+              "gerados=" + cards.length + " de " + CM_regras(w));
+        check(bloq.length >= 1, "existe pelo menos 1 caso bloqueado", "bloqueados=" + bloq.length);
+
+        var comFonte = pend.filter(function (p) { return p.querySelector(".insight__fonte .fonte__detalhe"); });
+        check(comFonte.length >= 3, "pontos pendentes exibem fonte rastreável",
+              comFonte.length + " de " + pend.length + " com fonte; ex.: " +
+              (comFonte[0] ? comFonte[0].querySelector(".fonte__detalhe").textContent.slice(0, 80) : "nenhuma"));
+
+        var comCitacao = pend.filter(function (p) { return p.querySelector(".citacao"); });
+        check(comCitacao.length >= 3, "pontos da base controlada citam a evidência recuperada",
+              comCitacao.length + " com citação");
+
+        if (bloq.length) {
+          var b = bloq[0];
+          check(b.textContent.indexOf("Motivo do bloqueio") >= 0, "bloqueado explica o motivo");
+          check(b.textContent.indexOf("Encaminhamento humano") >= 0, "bloqueado mostra encaminhamento humano");
+          check(!b.querySelector('[data-acao="aceitar"]'), "bloqueado não pode ser aceito");
+        }
+
+        check(!!pend[0] && !!pend[0].querySelector('[data-acao="aceitar"]') &&
+              !!pend[0].querySelector('[data-acao="ignorar"]'), "pendente tem aceitar e ignorar");
+
+        if (pend[0]) {
+          pend[0].querySelector('[data-acao="aceitar"]').click();
+          var aceito = q(".insight--aceito");
+          check(!!aceito, "validar e aceitar muda o status",
+                aceito ? aceito.querySelector(".insight__registro--ok").textContent : "");
+        }
+
+        var pend2 = q(".insight--pendente");
+        if (pend2) {
+          pend2.querySelector('[data-acao="ignorar"]').click();
+          check(!!q(".insight--ignorado"), "ignorar registra o descarte");
+        }
+
+        if (bloq.length) {
+          var btnEnc = q('.insight--bloqueado [data-acao="encaminhar"]');
+          check(!!btnEnc, "bloqueado oferece registro manual de encaminhamento");
+          if (btnEnc) {
+            btnEnc.click();
+            check(d.body.textContent.indexOf("Nenhuma ação foi enviada à paciente") >= 0,
+                  "encaminhamento registrado só após clique, com aviso de não-envio");
+          }
+        }
+
+        /* ---------- Tela 2: dashboard ---------- */
+        var kpis = qa("#kpis .kpi");
+        var selos = qa("#kpis .selo--simulado");
+        check(kpis.length === 4, "4 cartões de KPI", "n=" + kpis.length);
+        check(selos.length === kpis.length && kpis.length > 0,
+              "todo número de KPI tem selo visível de simulado", "selos=" + selos.length);
+        var bases = qa("#kpis .kpi__base");
+        check(bases.length === kpis.length &&
+              bases.every(function (b) { return /Base:.*registros sintéticos/.test(b.textContent); }),
+              "todo KPI mostra a amostra sintética que o sustenta", "bases=" + bases.length);
+        check(!!q("#tela-dashboard .aviso-simulado"), "tela tem aviso proeminente de número simulado");
+
+        var svg = q("#grafico svg");
+        check(!!svg, "gráfico de série temporal renderizado");
+        if (svg) {
+          var svgText = svg.textContent;
+          check(svgText.indexOf("Mês de 2026") >= 0 && svgText.indexOf("Exames recebidos") >= 0,
+                "gráfico tem eixos rotulados");
+        }
+
+        var ths = qa("#tabela-gestao th").map(function (t) { return t.textContent; });
+        var linhas = qa("#tabela-gestao tbody tr");
+        check(ths.some(function (t) { return /Leitura interpretativa/.test(t); }),
+              "tabela de gestão tem coluna de leitura interpretativa", ths.join(", "));
+        check(linhas.length >= 3, "tabela tem linhas para gestão", "linhas=" + linhas.length);
+
+        var botoesDash = qa("#tela-dashboard button");
+        check(botoesDash.length === 0, "nenhuma ação automática no dashboard", "botões=" + botoesDash.length);
+
+        /* ---------- Tela 3: retorno ao paciente ---------- */
+        var status0 = d.getElementById("retorno-status").textContent;
+        check(status0.indexOf("Rascunho, não enviado") >= 0, "resumo começa como rascunho não enviado", status0);
+
+        var ta = d.getElementById("retorno-texto");
+        check(ta.value.indexOf("Resumo da consulta") >= 0, "resumo gerado a partir da consulta");
+        check(ta.value.indexOf("mg/dL") >= 0, "resumo inclui dado de exame (mg/dL não é dose)");
+        check(ta.value.split("\n").length > 10, "resumo tem corpo completo", ta.value.split("\n").length + " linhas");
+
+        w.confirm = function () { return true; };
+
+        /* texto com dose deve bloquear a validação */
+        ta.value = ta.value + "\nA senhora deve tomar 500 mg pela manhã.";
+        ta.dispatchEvent(new w.Event("input"));
+        d.getElementById("chk-revisao").checked = true;
+        d.getElementById("btn-validar").click();
+        var err1 = d.getElementById("retorno-erro");
+        check(!err1.hidden && /dose/.test(err1.textContent),
+              "validação bloqueada para texto com dose", err1.textContent.slice(0, 110));
+        check(d.getElementById("retorno-status").textContent.indexOf("Rascunho") >= 0,
+              "status continua não enviado após bloqueio");
+
+        /* sem revisão marcada deve bloquear */
+        ta.value = ta.value.replace("\nA senhora deve tomar 500 mg pela manhã.", "");
+        ta.dispatchEvent(new w.Event("input"));
+        d.getElementById("chk-revisao").checked = false;
+        d.getElementById("btn-validar").click();
+        var err2 = d.getElementById("retorno-erro");
+        check(!err2.hidden, "validação exige revisão marcada pelo profissional",
+              err2.textContent.slice(0, 80));
+
+        /* com revisão e clique explícito valida */
+        d.getElementById("chk-revisao").checked = true;
+        d.getElementById("btn-validar").click();
+        var status1 = d.getElementById("retorno-status").textContent;
+        check(/Validado/.test(status1), "validação registrada após clique explícito", status1);
+        check(d.getElementById("retorno-log").textContent.indexOf("nenhuma mensagem foi enviada") >= 0,
+              "log deixa claro que nada foi enviado de verdade");
+        check(/Reabrir rascunho/.test(d.getElementById("btn-validar").textContent),
+              "validação pode ser desfeita pelo profissional");
+
+        /* ---------- Regras transversais ---------- */
+        var botoes = qa("#tela-analise button, #tela-retorno button")
+          .map(function (b) { return b.textContent; });
+        check(!botoes.some(function (t) { return t.indexOf("→") >= 0; }), "nenhum botão com seta decorativa");
+        check(d.body.textContent.indexOf(" · ") < 0, "nenhum separador decorativo no texto");
+
+        /* navegação */
+        var temaAntes = d.documentElement.getAttribute("data-tema");
+        q('.nav__item[data-tela="dashboard"]').click();
+        check(w.location.hash === "#dashboard" &&
+              d.getElementById("tela-dashboard").hidden === false &&
+              d.getElementById("tela-analise").hidden === true, "navegação troca de tela",
+              "hash=" + w.location.hash);
+
+        /* tema */
+        d.getElementById("btn-tema").click();
+        check(d.documentElement.getAttribute("data-tema") !== temaAntes,
+              "alternador de tema funciona",
+              temaAntes + " -> " + d.documentElement.getAttribute("data-tema"));
+        /* deixa o tema em claro para a fase de persistência provar
+           que a escolha sobrevive ao recarregamento */
+        if (d.documentElement.getAttribute("data-tema") !== "claro") {
+          d.getElementById("btn-tema").click();
+        }
+
+      } catch (e) {
+        check(false, "exceção durante o teste", String((e && e.stack) || e));
+      }
+
+    }
+
+    function CM_regras(w) {
+      try { return w.CM.insights.REGRAS.length; } catch (e) { return -1; }
+    }
+
+    function persistencia(w, d) {
+      var q = function (sel) { return d.querySelector(sel); };
+      check(!!q(".insight--aceito"),
+            "marcação de aceito sobrevive ao recarregamento");
+      check(/Validado/.test(d.getElementById("retorno-status").textContent),
+            "validação do resumo sobrevive ao recarregamento",
+            d.getElementById("retorno-status").textContent);
+      check(d.getElementById("retorno-log").children.length >= 1 &&
+            d.getElementById("retorno-log").textContent.indexOf("nenhuma mensagem foi enviada") >= 0,
+            "histórico de validação preservado");
+      check(d.getElementById("retorno-texto").value.indexOf("Resumo da consulta") >= 0,
+            "texto do resumo preservado");
+      check(d.documentElement.getAttribute("data-tema") === "claro",
+            "tema escolhido sobrevive ao recarregamento",
+            d.documentElement.getAttribute("data-tema"));
+      check(d.getElementById("analise-estado").textContent.indexOf("Análise executada") >= 0,
+            "resultado da análise restaurado");
+    }
+
+    var finalizado = false;
+    function finalizar() {
+      if (finalizado) return;
+      finalizado = true;
+      var falhas = resultados.filter(function (r) { return r.indexOf("FAIL") === 0; }).length;
+      document.title = (falhas === 0 ? "ALL PASS " : falhas + " FAIL ") + resultados.length + " testes";
+      var resumo = document.createElement("li");
+      resumo.className = falhas === 0 ? "pass" : "fail";
+      resumo.textContent = "TOTAL: " + resultados.length + " verificações, " + falhas + " falhas";
+      document.getElementById("saidas").appendChild(resumo);
+      console.log(document.title);
+    }
+
+    function posReset(w, d) {
+      var q = function (sel) { return d.querySelector(sel); };
+      check(d.getElementById("btn-analisar").textContent === "Analisar consulta",
+            "reinício volta a tela ao estado inicial da análise",
+            d.getElementById("btn-analisar").textContent);
+      check(!q(".insight--aceito") && !q(".insight--ignorado"),
+            "reinício apaga as marcações de aceitar e ignorar");
+      check(/Rascunho, não enviado/.test(d.getElementById("retorno-status").textContent),
+            "reinício devolve o resumo a rascunho não enviado");
+      check(d.getElementById("retorno-log").textContent.indexOf("Nenhuma validação") >= 0,
+            "reinício limpa o histórico de validação");
+      check(/Ainda não executamos o cruzamento/.test(d.getElementById("analise-estado").textContent),
+            "reinício limpa o resultado da análise");
+      var ruins = [];
+      for (var i = 0; i < localStorage.length; i++) {
+        var k = localStorage.key(i);
+        if (!k || k.indexOf("copiloto.v1.") !== 0) continue;
+        /* tema é regravado a cada carga; retorno é regravado com o
+           padrão virgem (rascunho sem histórico) pelo próprio init */
+        if (k === "copiloto.v1.tema") continue;
+        if (k === "copiloto.v1.retorno") {
+          try {
+            var v = JSON.parse(localStorage.getItem(k));
+            if (v && v.validado === false && (!v.entradas || v.entradas.length === 0)) continue;
+          } catch (e) {}
+        }
+        ruins.push(k);
+      }
+      check(ruins.length === 0,
+            "reinício remove o estado salvo do produto (só sobram padrões)",
+            ruins.join(","));
+    }
+
+    var fase = 1;
+    var frame = document.getElementById("app");
+    frame.addEventListener("load", function () {
+      var fc = frame.contentWindow;
+      if (fase === 1) {
+        /* limpa o estado deixado por execuções anteriores */
+        fase = 2;
+        try { fc.localStorage.clear(); } catch (e) {}
+        fc.location.reload();
+        return;
+      }
+      if (fase === 2) {
+        /* suíte principal e recarregamento para provar a persistência */
+        fase = 3;
+        run(fc, frame.contentDocument);
+        frame.contentWindow.location.reload();
+        return;
+      }
+      if (fase === 3) {
+        /* persistência provada; agora o botão de reinício */
+        fase = 4;
+        try {
+          persistencia(fc, frame.contentDocument);
+          check(!!frame.contentDocument.getElementById("btn-reiniciar"),
+                "existe botão de reiniciar demonstração");
+          fc.confirm = function () { return true; };
+          frame.contentDocument.getElementById("btn-reiniciar").click();
+        } catch (e) {
+          check(false, "exceção na fase de reinício", String((e && e.stack) || e));
+          try { localStorage.clear(); } catch (e2) {}
+          finalizar();
+        }
+        return;
+      }
+      try {
+        posReset(fc, frame.contentDocument);
+      } catch (e) {
+        check(false, "exceção na checagem pós-reinício", String((e && e.stack) || e));
+      }
+      try { localStorage.clear(); } catch (e) {}
+      finalizar();
+    });
+  </script>
+</body>
+</html>

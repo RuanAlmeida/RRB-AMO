@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <title>mobile</title>
+  <style>
+    body { margin: 0; }
+    iframe { width: 390px; height: 900px; border: 0; display: block; }
+  </style>
+</head>
+<body>
+  <iframe id="app"></iframe>
+  <script>
+    /* Medidor e captura de tela móvel em largura REAL de 390px.
+       (O --window-size do Chrome headless não desce de 500 no layout;
+       por isso a medida e a captura precisam do iframe.)
+       ?hash=analise|dashboard|retorno, ?analisar=1, ?h=<altura do iframe>.
+       O título vira "OK ..." se o documento não passa de 390px, ou
+       "OVERFLOW ..." listando os elementos que estouram. */
+    var p = new URLSearchParams(location.search);
+    var frame = document.getElementById("app");
+    if (p.get("h")) frame.style.height = parseInt(p.get("h"), 10) + "px";
+    frame.src = "../index.html?sem-estado=1#" + (p.get("hash") || "analise");
+
+    frame.addEventListener("load", function () {
+      var d = frame.contentDocument;
+      if (p.get("analisar") === "1") {
+        d.getElementById("btn-analisar").click();
+      }
+      var raiz = d.documentElement;
+      var alargos = [];
+      Array.prototype.forEach.call(d.body.querySelectorAll("*"), function (el) {
+        var r = el.getBoundingClientRect();
+        if (r.right > 391) {
+          alargos.push(el.tagName.toLowerCase() +
+            (typeof el.className === "string" && el.className
+              ? "." + el.className.split(" ").join(".")
+              : "") +
+            "=" + Math.round(r.right));
+        }
+      });
+      document.title = (raiz.scrollWidth <= 390 ? "OK" : "OVERFLOW") +
+        " scrollW=" + raiz.scrollWidth +
+        (alargos.length ? " | " + alargos.slice(0, 6).join(" | ") : "");
+    });
+  </script>
+</body>
+</html>
