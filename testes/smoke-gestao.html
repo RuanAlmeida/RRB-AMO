@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <title>Smoke test — Gestão</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 20px; }
+    iframe { width: 1200px; height: 800px; border: 1px solid #ccc; }
+    li.pass { color: #2F6B4F; }
+    li.fail { color: #9C3E37; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <h1>Smoke test — Análise Preditiva da Rede (gestão)</h1>
+  <ul id="saidas"></ul>
+  <iframe id="app" src="../gestao/index.html"></iframe>
+
+  <script>
+    var resultados = [];
+
+    function check(cond, nome, detalhe) {
+      var ok = !!cond;
+      resultados.push((ok ? "PASS" : "FAIL") + " " + nome);
+      var li = document.createElement("li");
+      li.className = ok ? "pass" : "fail";
+      li.textContent = (ok ? "PASS" : "FAIL") + " — " + nome + (detalhe ? " (" + detalhe + ")" : "");
+      document.getElementById("saidas").appendChild(li);
+      console.log((ok ? "PASS" : "FAIL") + " " + nome + (detalhe ? " " + detalhe : ""));
+    }
+
+    function finalizar() {
+      var falhas = resultados.filter(function (r) { return r.indexOf("FAIL") === 0; }).length;
+      document.title = (falhas === 0 ? "ALL PASS " : falhas + " FAIL ") + resultados.length + " testes";
+      var resumo = document.createElement("li");
+      resumo.className = falhas === 0 ? "pass" : "fail";
+      resumo.textContent = "TOTAL: " + resultados.length + " verificações, " + falhas + " falhas";
+      document.getElementById("saidas").appendChild(resumo);
+      console.log(document.title);
+      /* mantém o invariante: suíte termina com o storage limpo */
+      try { localStorage.clear(); } catch (e) {}
+    }
+
+    function run(w, d) {
+      try {
+        var q = function (sel) { return d.querySelector(sel); };
+        var qa = function (sel) { return Array.prototype.slice.call(d.querySelectorAll(sel)); };
+
+        /* separação de públicos: gestão não vê dado de paciente */
+        check(!d.getElementById("ctx-nome") &&
+              d.body.textContent.indexOf("Helena") < 0,
+              "gestão não exibe dado de paciente");
+
+        /* ---------- conteúdo herdado do dashboard ---------- */
+        var kpis = qa("#kpis .kpi");
+        var selos = qa("#kpis .selo--simulado");
+        check(kpis.length === 4, "4 cartões de KPI", "n=" + kpis.length);
+        check(selos.length === kpis.length && kpis.length > 0,
+              "todo número de KPI tem selo visível de simulado", "selos=" + selos.length);
+        var bases = qa("#kpis .kpi__base");
+        check(bases.length === kpis.length &&
+              bases.every(function (b) { return /Base:.*registros sintéticos/.test(b.textContent); }),
+              "todo KPI mostra a amostra sintética que o sustenta", "bases=" + bases.length);
+        check(!!q("#tela-dashboard .aviso-simulado"), "tela tem aviso proeminente de número simulado");
+
+        var svg = q("#grafico svg");
+        check(!!svg, "gráfico de série temporal renderizado");
+        if (svg) {
+          var svgText = svg.textContent;
+          check(svgText.indexOf("Mês de 2026") >= 0 && svgText.indexOf("Exames recebidos") >= 0,
+                "gráfico tem eixos rotulados");
+        }
+
+        var ths = qa("#tabela-gestao th").map(function (t) { return t.textContent; });
+        var linhas = qa("#tabela-gestao tbody tr");
+        check(ths.some(function (t) { return /Leitura interpretativa/.test(t); }),
+              "tabela de gestão tem coluna de leitura interpretativa", ths.join(", "));
+        check(linhas.length >= 3, "tabela tem linhas para gestão", "linhas=" + linhas.length);
+
+        var botoesDash = qa("#tela-dashboard button");
+        check(botoesDash.length === 0, "nenhuma ação automática no dashboard", "botões=" + botoesDash.length);
+
+        /* tema funciona também nesta aplicação */
+        var temaAntes = d.documentElement.getAttribute("data-tema");
+        d.getElementById("btn-tema").click();
+        check(d.documentElement.getAttribute("data-tema") !== temaAntes,
+              "alternador de tema funciona", temaAntes + " -> " + d.documentElement.getAttribute("data-tema"));
+      } catch (e) {
+        check(false, "exceção durante o teste", String((e && e.stack) || e));
+      }
+      finalizar();
+    }
+
+    document.getElementById("app").addEventListener("load", function () {
+      var frame = document.getElementById("app");
+      run(frame.contentWindow, frame.contentDocument);
+    });
+  </script>
+</body>
+</html>

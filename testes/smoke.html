@@ -137,34 +137,10 @@
           }
         }
 
-        /* ---------- Tela 2: dashboard ---------- */
-        var kpis = qa("#kpis .kpi");
-        var selos = qa("#kpis .selo--simulado");
-        check(kpis.length === 4, "4 cartões de KPI", "n=" + kpis.length);
-        check(selos.length === kpis.length && kpis.length > 0,
-              "todo número de KPI tem selo visível de simulado", "selos=" + selos.length);
-        var bases = qa("#kpis .kpi__base");
-        check(bases.length === kpis.length &&
-              bases.every(function (b) { return /Base:.*registros sintéticos/.test(b.textContent); }),
-              "todo KPI mostra a amostra sintética que o sustenta", "bases=" + bases.length);
-        check(!!q("#tela-dashboard .aviso-simulado"), "tela tem aviso proeminente de número simulado");
-
-        var svg = q("#grafico svg");
-        check(!!svg, "gráfico de série temporal renderizado");
-        if (svg) {
-          var svgText = svg.textContent;
-          check(svgText.indexOf("Mês de 2026") >= 0 && svgText.indexOf("Exames recebidos") >= 0,
-                "gráfico tem eixos rotulados");
-        }
-
-        var ths = qa("#tabela-gestao th").map(function (t) { return t.textContent; });
-        var linhas = qa("#tabela-gestao tbody tr");
-        check(ths.some(function (t) { return /Leitura interpretativa/.test(t); }),
-              "tabela de gestão tem coluna de leitura interpretativa", ths.join(", "));
-        check(linhas.length >= 3, "tabela tem linhas para gestão", "linhas=" + linhas.length);
-
-        var botoesDash = qa("#tela-dashboard button");
-        check(botoesDash.length === 0, "nenhuma ação automática no dashboard", "botões=" + botoesDash.length);
+        /* o dashboard saiu deste app: virou aplicação de gestão própria */
+        check(!d.getElementById("tela-dashboard") &&
+              !d.querySelector('.nav__item[data-tela="dashboard"]'),
+              "dashboard não existe mais no app do médico");
 
         /* ---------- Tela 3: retorno ao paciente ---------- */
         var status0 = d.getElementById("retorno-status").textContent;
@@ -215,9 +191,9 @@
 
         /* navegação */
         var temaAntes = d.documentElement.getAttribute("data-tema");
-        q('.nav__item[data-tela="dashboard"]').click();
-        check(w.location.hash === "#dashboard" &&
-              d.getElementById("tela-dashboard").hidden === false &&
+        q('.nav__item[data-tela="retorno"]').click();
+        check(w.location.hash === "#retorno" &&
+              d.getElementById("tela-retorno").hidden === false &&
               d.getElementById("tela-analise").hidden === true, "navegação troca de tela",
               "hash=" + w.location.hash);
 

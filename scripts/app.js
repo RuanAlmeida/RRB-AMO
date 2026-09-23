@@ -1,6 +1,6 @@
 /* Navegação, tema e inicialização das telas. */
 (function () {
-  const TELAS = ["analise", "dashboard", "retorno"];
+  const TELAS = ["analise", "retorno"];
 
   function mostrar(nome) {
     TELAS.forEach(function (t) {
@@ -22,9 +22,8 @@
       aplicarTema(salvo);
       return;
     }
-    const prefereEscuro = window.matchMedia &&
-      window.matchMedia("(prefers-color-scheme: dark)").matches;
-    aplicarTema(prefereEscuro ? "escuro" : "claro");
+    /* padrão do produto: modo escuro */
+    aplicarTema("escuro");
   }
 
   function aplicarTema(tema) {
@@ -69,7 +68,6 @@
     temaInicial();
     preencherContexto();
     CM.ui.analise.init();
-    CM.ui.dashboard.init();
     CM.ui.retorno.init();
     rotear();
   });

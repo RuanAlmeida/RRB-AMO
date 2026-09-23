@@ -13,6 +13,7 @@ um e **bloqueia sugestões sem evidência suficiente**, encaminhando para revis�
 - **Demonstração no ar:** https://ruanalmeida.github.io/RRB-AMO/
 - **Repositório:** https://github.com/RuanAlmeida/RRB-AMO
 - **Versão apresentada:** tag `v1.0-hackinova`
+- **Gestão (coordenação):** https://ruanalmeida.github.io/RRB-AMO/gestao/
 
 ## Como rodar
 

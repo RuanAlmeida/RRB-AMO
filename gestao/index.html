@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="pt-BR" data-tema="escuro">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Análise Preditiva da Rede — Copiloto de Gestão</title>
+  <meta name="description" content="Análise preditiva populacional para coordenação e diretoria. Números sintéticos, sem ação automática.">
+  <link rel="stylesheet" href="../styles/fontes.css">
+  <link rel="stylesheet" href="../styles/tokens.css">
+  <link rel="stylesheet" href="../styles/app.css">
+</head>
+<body>
+  <div class="app">
+
+    <aside class="sidebar">
+      <div class="marca">
+        <p class="marca__nome">Análise Preditiva da Rede</p>
+        <p class="marca__sub">Aplicação de gestão, para coordenação e diretoria</p>
+      </div>
+
+      <div class="contexto" aria-label="Perfil de acesso">
+        <p class="contexto__titulo">Perfil de acesso</p>
+        <p class="contexto__nome">Coordenação</p>
+        <p class="contexto__meta">Leitura populacional, sem dado de paciente</p>
+        <p class="contexto__aviso">Registro sintético, dado de demonstração</p>
+      </div>
+
+      <div class="sidebar__rodape">
+        <button class="btn btn--fantasma tema-btn" type="button" id="btn-tema">Usar modo claro</button>
+      </div>
+    </aside>
+
+    <main class="principal">
+
+      <section class="tela" id="tela-dashboard">
+        <header class="tela__cabecalho">
+          <h1 class="tela__titulo">Dashboard populacional</h1>
+          <p class="tela__contexto">
+            Agrega exames e consultas recebidos na rede sintética de demonstração.
+            Serve para leitura de gestão, nunca para decidir conduta de paciente.
+          </p>
+        </header>
+
+        <div class="aviso-simulado" role="note">
+          <p class="aviso-simulado__titulo">Números simulados, uso ilustrativo.</p>
+          <p>
+            Todos os valores desta tela vêm de registros sintéticos criados para a demonstração.
+            Nenhum número representa paciente real e nenhum elemento desta tela aciona ação
+            automática: o dashboard informa, a decisão é de quem lê.
+          </p>
+        </div>
+
+        <div class="kpis" id="kpis"></div>
+
+        <section class="painel" aria-label="Série temporal de exames">
+          <div class="painel__cabecalho">
+            <h2 class="painel__titulo">Exames recebidos por mês</h2>
+            <span class="selo selo--simulado">Série sintética</span>
+          </div>
+          <p class="painel__nota" id="serie-nota"></p>
+          <div class="grafico" id="grafico"></div>
+          <p class="painel__nota" id="serie-legenda"></p>
+        </section>
+
+        <section class="painel" aria-label="Tabela de leitura para gestão">
+          <div class="painel__cabecalho">
+            <h2 class="painel__titulo">Leitura para gestão</h2>
+            <span class="selo selo--simulado">Valores simulados</span>
+          </div>
+          <p class="painel__nota">
+            A coluna de leitura interpretativa existe porque o valor do dashboard é apoiar
+            decisão humana, não só exibir número.
+          </p>
+          <div class="tabela-rolagem">
+            <table class="tabela" id="tabela-gestao"></table>
+          </div>
+        </section>
+
+        <p class="nota-rodape">
+          Dados de demonstração, sem qualquer vínculo com prontuário real. Alteração de escala,
+          equipe ou agenda não acontece por esta tela: quem decide é a gestão, com registro.
+        </p>
+      </section>
+
+    </main>
+  </div>
+
+  <script src="../scripts/data/dashboard.js"></script>
+  <script src="../scripts/ui/util.js"></script>
+  <script src="../scripts/ui/dashboard.js"></script>
+  <script>
+    /* tema compartilhado com o app do médico (mesma origem) */
+    (function () {
+      function aplicar(tema) {
+        document.documentElement.setAttribute("data-tema", tema);
+        document.getElementById("btn-tema").textContent =
+          tema === "escuro" ? "Usar modo claro" : "Usar modo escuro";
+        CM.store.gravar("tema", tema);
+      }
+      var salvo = CM.store.ler("tema");
+      aplicar(salvo === "claro" || salvo === "escuro" ? salvo : "escuro");
+      document.getElementById("btn-tema").addEventListener("click", function () {
+        var atual = document.documentElement.getAttribute("data-tema");
+        aplicar(atual === "escuro" ? "claro" : "escuro");
+      });
+      CM.ui.dashboard.init();
+    })();
+  </script>
+</body>
+</html>

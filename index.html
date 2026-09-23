@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="pt-BR" data-tema="claro">
+<html lang="pt-BR" data-tema="escuro">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -21,7 +21,6 @@
 
       <nav class="nav" aria-label="Telas do copiloto">
         <button class="nav__item" type="button" data-tela="analise">Análise da consulta</button>
-        <button class="nav__item" type="button" data-tela="dashboard">Dashboard populacional</button>
         <button class="nav__item" type="button" data-tela="retorno">Retorno ao paciente</button>
       </nav>
 
@@ -45,8 +44,7 @@
         <header class="tela__cabecalho">
           <h1 class="tela__titulo">Análise da consulta</h1>
           <p class="tela__contexto">
-            Cruzamos o prontuário sintético e a transcrição simulada com a base controlada.
-            Cada ponto de atenção mostra de onde veio e só avança com validação sua.
+            Cruzamos prontuário e transcrição com a base controlada. Cada ponto mostra a fonte e só avança com você.
           </p>
         </header>
 
@@ -61,8 +59,7 @@
             <button class="btn btn--primario" type="button" id="btn-analisar">Analisar consulta</button>
           </div>
           <p class="painel__nota" id="analise-estado">
-            Ainda não executamos o cruzamento. Rode a análise para gerar os pontos
-            de atenção com fonte rastreável.
+            Ainda não executamos o cruzamento. Clique em Analisar consulta.
           </p>
 
           <div class="barra-status" id="barra-status" hidden></div>
@@ -75,64 +72,12 @@
         </section>
       </section>
 
-      <!-- Tela 2: Dashboard populacional -->
-      <section class="tela" id="tela-dashboard" hidden>
-        <header class="tela__cabecalho">
-          <h1 class="tela__titulo">Dashboard populacional</h1>
-          <p class="tela__contexto">
-            Agrega exames e consultas recebidos na rede sintética de demonstração.
-            Serve para leitura de gestão, nunca para decidir conduta de paciente.
-          </p>
-        </header>
-
-        <div class="aviso-simulado" role="note">
-          <p class="aviso-simulado__titulo">Números simulados, uso ilustrativo.</p>
-          <p>
-            Todos os valores desta tela vêm de registros sintéticos criados para a demonstração.
-            Nenhum número representa paciente real e nenhum elemento desta tela aciona ação
-            automática: o dashboard informa, a decisão é de quem lê.
-          </p>
-        </div>
-
-        <div class="kpis" id="kpis"></div>
-
-        <section class="painel" aria-label="Série temporal de exames">
-          <div class="painel__cabecalho">
-            <h2 class="painel__titulo">Exames recebidos por mês</h2>
-            <span class="selo selo--simulado">Série sintética</span>
-          </div>
-          <p class="painel__nota" id="serie-nota"></p>
-          <div class="grafico" id="grafico"></div>
-          <p class="painel__nota" id="serie-legenda"></p>
-        </section>
-
-        <section class="painel" aria-label="Tabela de leitura para gestão">
-          <div class="painel__cabecalho">
-            <h2 class="painel__titulo">Leitura para gestão</h2>
-            <span class="selo selo--simulado">Valores simulados</span>
-          </div>
-          <p class="painel__nota">
-            A coluna de leitura interpretativa existe porque o valor do dashboard é apoiar
-            decisão humana, não só exibir número.
-          </p>
-          <div class="tabela-rolagem">
-            <table class="tabela" id="tabela-gestao"></table>
-          </div>
-        </section>
-
-        <p class="nota-rodape">
-          Dados de demonstração, sem qualquer vínculo com prontuário real. Alteração de escala,
-          equipe ou agenda não acontece por esta tela: quem decide é a gestão, com registro.
-        </p>
-      </section>
-
-      <!-- Tela 3: Retorno ao paciente -->
+      <!-- Tela 2: Retorno ao paciente -->
       <section class="tela" id="tela-retorno" hidden>
         <header class="tela__cabecalho">
           <h1 class="tela__titulo">Retorno ao paciente</h1>
           <p class="tela__contexto">
-            Resumo gerado a partir desta consulta, editável por você. Nada segue para a pessoa
-            sem a sua validação explícita nesta tela.
+            Resumo desta consulta, editável por você. Nada segue sem a sua validação explícita.
           </p>
         </header>
 
@@ -157,8 +102,7 @@
             <span class="selo selo--pendente" id="retorno-status">Rascunho, não enviado</span>
           </div>
           <p class="painel__nota">
-            Gerado a partir do prontuário, da transcrição e dos pontos de atenção que você aceitou.
-            Edite o texto como faria com qualquer nota antes de validar.
+            Gerado do prontuário, da transcrição e dos pontos que você aceitou. Edite como faria com qualquer nota.
           </p>
 
           <label class="rotulo-campo" for="retorno-texto">Texto do resumo</label>
@@ -189,9 +133,7 @@
             <h2 class="painel__titulo">Validação do profissional</h2>
           </div>
           <p class="painel__nota">
-            Enviar sem revisão não existe neste produto. O envio real de mensagem está fora do
-            escopo desta demonstração: após validar, o registro fica aqui como preparado para o
-            canal assistido.
+            Enviar sem revisão não existe aqui. Após validar, o registro fica preparado para o canal assistido, sem nada enviado automaticamente.
           </p>
 
           <label class="checkbox">
@@ -206,8 +148,7 @@
           <div class="guardrail">
             <p class="guardrail__titulo">Limite do copiloto</p>
             <p>
-              Esta tela monta e registra um resumo. Não existe, em nenhum ponto do produto,
-              geração de diagnóstico, prescrição ou orientação automática direcionada à paciente.
+              Esta tela monta e registra um resumo. Nunca gera diagnóstico, prescrição nem orientação automática à paciente.
             </p>
           </div>
 
@@ -230,12 +171,10 @@
   <script src="scripts/data/prontuario.js"></script>
   <script src="scripts/data/transcricao.js"></script>
   <script src="scripts/data/base-controlada.js"></script>
-  <script src="scripts/data/dashboard.js"></script>
   <script src="scripts/engine/rag.js"></script>
   <script src="scripts/engine/insights.js"></script>
   <script src="scripts/ui/util.js"></script>
   <script src="scripts/ui/analise.js"></script>
-  <script src="scripts/ui/dashboard.js"></script>
   <script src="scripts/ui/retorno.js"></script>
   <script src="scripts/app.js"></script>
 </body>
