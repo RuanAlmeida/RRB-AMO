@@ -10,6 +10,10 @@ um e **bloqueia sugestões sem evidência suficiente**, encaminhando para revis�
 > Produto de apoio, não de diagnóstico: sem prescrição, sem orientação automática ao
 > paciente, sem dado real. Toda saída relevante exige validação humana explícita.
 
+- **Demonstração no ar:** https://ruanalmeida.github.io/RRB-AMO/
+- **Repositório:** https://github.com/RuanAlmeida/RRB-AMO
+- **Versão apresentada:** tag `v1.0-hackinova`
+
 ## Como rodar
 
 Não há build nem dependências. É HTML, CSS e JavaScript puros.
