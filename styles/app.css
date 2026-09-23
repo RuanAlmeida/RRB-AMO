@@ -184,6 +184,43 @@ button {
   color: var(--green);
 }
 
+/* alternador de origem da transcrição (exemplo pronto ou texto colado) */
+.alternador {
+  display: inline-flex;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--line);
+  border-radius: var(--raio-controle);
+  background: var(--bg);
+  margin-top: 8px;
+}
+
+.alternador__opcao {
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font-size: var(--t-3);
+  font-weight: 500;
+  padding: 6px 12px;
+  border-radius: var(--raio-controle);
+}
+
+.alternador__opcao--ativo {
+  background: var(--primary);
+  color: var(--primary-ink);
+  font-weight: 600;
+}
+
+/* edição inline da redação dentro do cartão de ponto de atenção */
+.insight__edicao {
+  border-top: 1px solid var(--line);
+  margin-top: 12px;
+  padding-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
 .sidebar__rodape {
   margin-top: auto;
   display: flex;

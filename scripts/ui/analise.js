@@ -79,11 +79,113 @@ CM.ui.analise = (function () {
         '<table class="tabela">' + meds + "</table></div>";
   }
 
-  /* ---------------- Transcrição ---------------- */
+  /* ---------------- Transcrição ----------------
+     Duas origens possíveis: o exemplo pronto da consulta (padrão) ou um
+     texto colado pelo profissional. O estado vale para o paciente da vez
+     (chave "transcricao", trocada junto com a fila) e trocar de origem
+     zera a análise anterior, porque o motor lê a transcrição. */
+  let visaoTranscricao = "exemplo";
+
+  function trechosDoTexto(texto) {
+    return texto.split(/\n+/)
+      .map(function (linha) { return linha.trim(); })
+      .filter(Boolean)
+      .map(function (linha, i) {
+        return {
+          falante: "paciente",
+          timestamp: "00:" + String(i + 1).padStart(2, "0"),
+          texto: linha
+        };
+      });
+  }
+
+  function estadoTranscricao() {
+    const salvo = CM.store.ler("transcricao");
+    if (salvo && salvo.modo === "colado" && salvo.texto) return salvo;
+    return { modo: "exemplo" };
+  }
+
+  /* aplica o estado salvo sobre CM.data.transcricao.trechos; o exemplo
+     original fica guardado em _exemplo para poder ser restaurado */
+  function aplicarEstadoTranscricao() {
+    const t = CM.data.transcricao;
+    if (!t._exemplo) t._exemplo = t.trechos;
+    const est = estadoTranscricao();
+    t.trechos = est.modo === "colado" ? trechosDoTexto(est.texto) : t._exemplo;
+  }
+
+  function reiniciarAnalise() {
+    itens = [];
+    estados = {};
+    filtro = "todos";
+    analisado = false;
+    editando = null;
+    document.getElementById("analise-estado").textContent =
+      "Ainda não executamos o cruzamento. Clique em Analisar consulta.";
+    document.getElementById("btn-analisar").textContent = "Analisar consulta";
+    renderTudo();
+  }
+
+  function definirTranscricao(estado) {
+    CM.store.gravar("transcricao", estado);
+    CM.store.gravar("analise", null);  /* a análise anterior não serve para outro texto */
+    aplicarEstadoTranscricao();
+    reiniciarAnalise();
+  }
+
+  function mostrarErroTranscricao(texto) {
+    const caixa = document.getElementById("transcricao-erro");
+    if (!caixa) return;
+    caixa.hidden = !texto;
+    caixa.textContent = texto || "";
+  }
+
+  function onTranscricao(evento) {
+    const alvo = evento.target.closest("button[data-transc]");
+    if (!alvo) return;
+    const tipo = alvo.dataset.transc;
+
+    if (tipo === "ver-exemplo" || tipo === "ver-colar") {
+      visaoTranscricao = tipo === "ver-colar" ? "colar" : "exemplo";
+      mostrarErroTranscricao("");
+      renderTranscricao();
+      return;
+    }
+
+    if (tipo === "aplicar") {
+      const campo = document.getElementById("transcricao-texto");
+      const texto = campo ? campo.value.trim() : "";
+      if (!texto) {
+        mostrarErroTranscricao("Cole ou escreva o texto da transcrição antes de usar.");
+        return;
+      }
+      const ok = window.confirm(
+        "Aplicar este texto como transcrição da consulta? A análise atual será refeita com ele."
+      );
+      if (!ok) return;
+      definirTranscricao({ modo: "colado", texto: texto });
+      visaoTranscricao = "colar";
+      renderTranscricao();
+      return;
+    }
+
+    /* usar-exemplo */
+    const ok = window.confirm(
+      "Voltar ao exemplo pronto da transcrição? A análise atual será refeita com o exemplo."
+    );
+    if (!ok) return;
+    definirTranscricao({ modo: "exemplo" });
+    visaoTranscricao = "exemplo";
+    renderTranscricao();
+  }
 
   function renderTranscricao() {
     const t = CM.data.transcricao;
-    const trechos = t.trechos.map(function (tr) {
+    const est = estadoTranscricao();
+    const emUsoColado = est.modo === "colado";
+    const exemplo = t._exemplo || t.trechos;
+
+    const trechos = exemplo.map(function (tr) {
       return '<div class="trecho ' + (tr.falante === "paciente" ? "trecho--paciente" : "") + '">' +
         '<div class="trecho__cabecalho">' +
           '<span class="trecho__falante">' + u().esc(u().FALANTES[tr.falante] || tr.falante) + "</span>" +
@@ -93,15 +195,42 @@ CM.ui.analise = (function () {
       "</div>";
     }).join("");
 
+    const visao = visaoTranscricao === "colar"
+      ? '<label class="rotulo-campo" for="transcricao-texto">Texto da transcrição</label>' +
+        '<textarea class="campo-texto" id="transcricao-texto" rows="8" spellcheck="false" ' +
+          'placeholder="Cole aqui a transcrição da consulta. Uma linha por fala.">' +
+          u().esc(emUsoColado ? est.texto : "") + "</textarea>" +
+        '<div class="erro" id="transcricao-erro" hidden role="alert"></div>' +
+        '<div class="acoes-painel">' +
+          '<button class="btn btn--primario" type="button" data-transc="aplicar">Usar este texto</button>' +
+        "</div>"
+      : '<div class="transcricao">' + trechos + "</div>" +
+        (emUsoColado
+          ? '<div class="acoes-painel">' +
+              '<button class="btn btn--secundario" type="button" data-transc="usar-exemplo">' +
+                "Usar o exemplo da consulta</button>" +
+            "</div>"
+          : "");
+
     document.getElementById("painel-transcricao").innerHTML =
       '<div class="painel__cabecalho">' +
-        '<h2 class="painel__titulo">Transcrição simulada</h2>' +
-        '<span class="selo">Gravação fictícia</span>' +
+        '<h2 class="painel__titulo">Transcrição da consulta</h2>' +
+        '<span class="selo">' + (emUsoColado ? "Texto colado" : "Exemplo pronto") + "</span>" +
       "</div>" +
       '<p class="painel__nota">Consulta de ' + u().dataBR(t.data) +
         ", duração estimada de " + u().esc(t.duracao) +
         ", identificador " + u().esc(t.consulta_id) + ".</p>" +
-      '<div class="transcricao">' + trechos + "</div>";
+      '<div class="alternador" role="group" aria-label="Origem da transcrição">' +
+        '<button class="alternador__opcao' + (visaoTranscricao === "exemplo" ? " alternador__opcao--ativo" : "") +
+          '" type="button" data-transc="ver-exemplo" aria-pressed="' + (visaoTranscricao === "exemplo") +
+          '">Exemplo da consulta</button>' +
+        '<button class="alternador__opcao' + (visaoTranscricao === "colar" ? " alternador__opcao--ativo" : "") +
+          '" type="button" data-transc="ver-colar" aria-pressed="' + (visaoTranscricao === "colar") +
+          '">Colar transcrição</button>' +
+      "</div>" +
+      '<p class="painel__nota" id="transcricao-em-uso">Em uso: ' +
+        (emUsoColado ? "texto colado pelo profissional" : "exemplo pronto da consulta") + ".</p>" +
+      visao;
   }
 
   /* ---------------- Status e filtros ---------------- */
@@ -169,14 +298,21 @@ CM.ui.analise = (function () {
       ", " + u().esc(u().FALANTES[item.origem.falante]) + "</p>";
   }
 
+  /* redação editável: um cartão por vez (editando = id), com a redação
+     corrigida guardada em estados[id].titulo e aplicada ao resumo */
+  let editando = null;
+
   function acoes(item) {
     const est = estados[item.id];
     const profissional = CM.data.prontuario.profissional;
+    const editar = '<button class="btn btn--fantasma" type="button" data-acao="editar" data-id="' +
+      item.id + '">Editar</button>';
 
     if (est.status === "pendente") {
       return '<div class="insight__acoes">' +
         '<button class="btn btn--primario" type="button" data-acao="aceitar" data-id="' + item.id + '">Validar e aceitar</button>' +
         '<button class="btn btn--secundario" type="button" data-acao="ignorar" data-id="' + item.id + '">Ignorar</button>' +
+        editar +
       "</div>";
     }
 
@@ -187,6 +323,7 @@ CM.ui.analise = (function () {
       return '<div class="insight__acoes">' +
         '<p class="insight__registro insight__registro--ok">' + u().esc(texto) + "</p>" +
         '<button class="btn btn--fantasma" type="button" data-acao="desfazer" data-id="' + item.id + '">Desfazer</button>' +
+        editar +
       "</div>";
     }
 
@@ -194,11 +331,12 @@ CM.ui.analise = (function () {
     if (est.encaminhado) {
       return '<div class="insight__acoes"><p class="insight__registro">' +
         "Encaminhamento registrado às " + u().esc(est.encaminhado) +
-      "</p></div>";
+      "</p>" + editar + "</div>";
     }
     return '<div class="insight__acoes">' +
       '<button class="btn btn--secundario" type="button" data-acao="encaminhar" data-id="' + item.id + '">' +
         "Registrar encaminhamento para revisão</button>" +
+      editar +
     "</div>";
   }
 
@@ -206,10 +344,11 @@ CM.ui.analise = (function () {
     const est = estados[item.id];
     const status = est.status;
     const selo = u().SELOS[status];
+    const titulo = est.titulo || item.titulo;
 
     let html = '<article class="insight insight--' + status + '" data-id="' + item.id + '">' +
       '<div class="insight__topo">' +
-        '<h3 class="insight__titulo">' + u().esc(item.titulo) + "</h3>" +
+        '<h3 class="insight__titulo">' + u().esc(titulo) + "</h3>" +
         '<span class="selo ' + selo.classe + '">' + u().esc(selo.texto) + "</span>" +
       "</div>" +
       '<p class="insight__corpo">' + u().esc(item.corpo) + "</p>";
@@ -229,6 +368,19 @@ CM.ui.analise = (function () {
       }
     } else {
       html += blocoFonte(item);
+    }
+
+    if (editando === item.id) {
+      html += '<div class="insight__edicao">' +
+        '<label class="rotulo-campo" for="insight-edicao-texto">Redação do ponto de atenção</label>' +
+        '<textarea class="campo-texto" id="insight-edicao-texto" rows="3" spellcheck="false">' +
+          u().esc(titulo) + "</textarea>" +
+        '<div class="erro" id="insight-edicao-erro" hidden role="alert"></div>' +
+        '<div class="acoes-painel">' +
+          '<button class="btn btn--primario" type="button" data-acao="salvar" data-id="' + item.id + '">Salvar redação</button>' +
+          '<button class="btn btn--secundario" type="button" data-acao="cancelar" data-id="' + item.id + '">Cancelar</button>' +
+        "</div>" +
+      "</div>";
     }
 
     html += acoes(item) + "</article>";
@@ -314,6 +466,32 @@ CM.ui.analise = (function () {
       estados[id].encaminhado = null;
     } else if (acao === "encaminhar") {
       estados[id].encaminhado = u().agora();
+    } else if (acao === "editar") {
+      editando = id;
+      renderTudo();
+      const campo = document.getElementById("insight-edicao-texto");
+      if (campo) campo.focus();
+      return;
+    } else if (acao === "salvar") {
+      const campo = document.getElementById("insight-edicao-texto");
+      const texto = campo ? campo.value.trim() : "";
+      if (!texto) {
+        const erro = document.getElementById("insight-edicao-erro");
+        if (erro) {
+          erro.hidden = false;
+          erro.textContent = "Escreva a redação antes de salvar.";
+        }
+        return;
+      }
+      estados[id].titulo = texto;
+      editando = null;
+      renderTudo();
+      persistir();
+      return;
+    } else if (acao === "cancelar") {
+      editando = null;
+      renderTudo();
+      return;
     } else {
       return;
     }
@@ -343,13 +521,13 @@ CM.ui.analise = (function () {
     const salvo = CM.store.ler("analise");
     if (!salvo || !salvo.analisado) return;
     /* o motor é determinístico: regenera os itens e só reaplica as
-       marcações que o profissional fez */
+       marcações (e redações) que o profissional fez */
     itens = CM.insights.analisar();
     estados = {};
     itens.forEach(function (i) {
       const antigo = salvo.estados ? salvo.estados[i.id] : null;
       estados[i.id] = antigo
-        ? { status: antigo.status, em: antigo.em, encaminhado: antigo.encaminhado }
+        ? { status: antigo.status, em: antigo.em, encaminhado: antigo.encaminhado, titulo: antigo.titulo }
         : { status: i.status, em: null, encaminhado: null };
     });
     analisado = true;
@@ -361,6 +539,7 @@ CM.ui.analise = (function () {
   }
 
   function init() {
+    aplicarEstadoTranscricao();
     renderProntuario();
     renderTranscricao();
     restaurar();
@@ -368,12 +547,13 @@ CM.ui.analise = (function () {
     document.getElementById("btn-analisar").addEventListener("click", executar);
     document.getElementById("lista-insights").addEventListener("click", delegar);
     document.getElementById("filtros").addEventListener("click", filtrar);
+    document.getElementById("painel-transcricao").addEventListener("click", onTranscricao);
   }
 
   function aceitos() {
     return itens
       .filter(function (i) { return estados[i.id].status === "aceito"; })
-      .map(function (i) { return i.titulo; });
+      .map(function (i) { return estados[i.id].titulo || i.titulo; });
   }
 
   return { init: init, aceitos: aceitos };

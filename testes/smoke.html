@@ -46,6 +46,34 @@
         var ctx = d.getElementById("ctx-nome").textContent;
         check(ctx.indexOf("Helena") >= 0, "sidebar mostra paciente ativo", ctx);
 
+        /* ---------- Transcrição: exemplo pronto + colar ---------- */
+        w.confirm = function () { return true; };
+        check(!!d.querySelector('[data-transc="ver-exemplo"]') &&
+              !!d.querySelector('[data-transc="ver-colar"]'),
+              "transcrição oferece exemplo pronto e campo para colar");
+        d.querySelector('[data-transc="ver-colar"]').click();
+        check(!!d.getElementById("transcricao-texto") &&
+              !!d.querySelector('[data-transc="aplicar"]'),
+              "visão de colar exibe o campo e o botão de aplicar");
+        d.getElementById("transcricao-texto").value =
+          "Relato de pontada no peito ao subir escada desde a última visita.\nPaciente nega outros sintomas.";
+        d.querySelector('[data-transc="aplicar"]').click();
+        check(/Em uso: texto colado/.test(d.getElementById("painel-transcricao").textContent),
+              "aplicar torna o texto colado a transcrição em uso");
+        d.getElementById("btn-analisar").click();
+        var idsColado = qa(".insight").map(function (c) { return c.getAttribute("data-id"); });
+        check(idsColado.join(",") === "PT-01,PT-02,PT-06",
+              "motor roda sobre o texto colado", idsColado.join(","));
+        d.querySelector('[data-transc="ver-exemplo"]').click();
+        check(d.body.textContent.indexOf("Tomo um chá") >= 0,
+              "visão de exemplo mostra a transcrição pronta");
+        check(!!d.querySelector('[data-transc="usar-exemplo"]'),
+              "com texto colado em uso, o exemplo oferece voltar ao exemplo pronto");
+        d.querySelector('[data-transc="usar-exemplo"]').click();
+        check(/Ainda não executamos o cruzamento/.test(d.getElementById("analise-estado").textContent) &&
+              /Em uso: exemplo pronto/.test(d.getElementById("painel-transcricao").textContent),
+              "voltar ao exemplo restaura a transcrição e zera a análise");
+
         d.getElementById("btn-analisar").click();
 
         var cards = qa(".insight");
@@ -153,6 +181,26 @@
         check(!!d.getElementById("btn-finalizar"),
               "botão finalizar e chamar próximo está na barra lateral");
 
+        /* ---------- Redação editável em cada cartão ---------- */
+        var cardP = q(".insight--pendente");
+        check(!!cardP && !!cardP.querySelector('[data-acao="editar"]'),
+              "cartão pendente oferece editar a redação");
+        check(!!bloq[0] && !!bloq[0].querySelector('[data-acao="editar"]'),
+              "cartão bloqueado oferece editar a redação");
+        var cardAceito = q(".insight--aceito");
+        if (cardAceito) {
+          cardAceito.querySelector('[data-acao="editar"]').click();
+          var campoEd = d.getElementById("insight-edicao-texto");
+          check(!!campoEd && campoEd.value.length > 0, "editar abre o campo já com a redação atual");
+          if (campoEd) {
+            campoEd.value = "Redação corrigida pelo profissional para o resumo.";
+            d.querySelector('[data-acao="salvar"]').click();
+            var titEd = q(".insight--aceito .insight__titulo");
+            check(!!titEd && titEd.textContent === "Redação corrigida pelo profissional para o resumo.",
+                  "salvar aplica a redação corrigida no cartão");
+          }
+        }
+
         /* ---------- Tela 3: retorno ao paciente ---------- */
         var status0 = d.getElementById("retorno-status").textContent;
         check(status0.indexOf("Rascunho, não enviado") >= 0, "resumo começa como rascunho não enviado", status0);
@@ -163,6 +211,11 @@
         check(ta.value.split("\n").length > 10, "resumo tem corpo completo", ta.value.split("\n").length + " linhas");
 
         w.confirm = function () { return true; };
+
+        /* resumo regenerado deve usar a redação corrigida do ponto aceito */
+        d.getElementById("btn-gerar").click();
+        check(d.getElementById("retorno-texto").value.indexOf("Redação corrigida pelo profissional") >= 0,
+              "resumo regenerado usa a redação corrigida do ponto aceito");
 
         /* texto com dose deve bloquear a validação */
         ta.value = ta.value + "\nA senhora deve tomar 500 mg pela manhã.";
@@ -246,6 +299,9 @@
             d.documentElement.getAttribute("data-tema"));
       check(d.getElementById("analise-estado").textContent.indexOf("Análise executada") >= 0,
             "resultado da análise restaurado");
+      check(!!q(".insight--aceito .insight__titulo") &&
+            q(".insight--aceito .insight__titulo").textContent.indexOf("Redação corrigida") >= 0,
+            "edição de redação sobrevive ao recarregamento");
     }
 
     var finalizado = false;
@@ -324,6 +380,10 @@
       check(qa(".insight--bloqueado").length === 1,
             "paciente da fila tem o ponto bloqueado dele",
             "bloqueados=" + qa(".insight--bloqueado").length);
+
+      /* a transcrição (exemplo ou texto colado) acompanha a troca */
+      check(w.localStorage.getItem("copiloto.v1.transcricao") !== null,
+            "transcrição acompanha a troca de paciente");
     }
 
     function posVolta(w, d) {

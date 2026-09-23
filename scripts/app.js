@@ -84,7 +84,8 @@
     const mapa = CM.store.ler("atendimentos") || {};
     mapa[fila.atual] = {
       analise: CM.store.ler("analise"),
-      retorno: CM.store.ler("retorno")
+      retorno: CM.store.ler("retorno"),
+      transcricao: CM.store.ler("transcricao")
     };
     CM.store.gravar("atendimentos", mapa);
   }
@@ -94,6 +95,7 @@
     const salvo = mapa[pid];
     CM.store.gravar("analise", salvo && salvo.analise ? salvo.analise : null);
     CM.store.gravar("retorno", salvo && salvo.retorno ? salvo.retorno : null);
+    CM.store.gravar("transcricao", salvo && salvo.transcricao ? salvo.transcricao : null);
   }
 
   function trocarPara(pid) {
