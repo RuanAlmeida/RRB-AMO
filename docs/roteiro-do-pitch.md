@@ -3,9 +3,9 @@
 Duração alvo: 3 minutos. Três blocos de 30 segundos + abertura e fechamento.
 Cada bloco amarra um critério do desafio à tela que o prova.
 
-## Antes de subir no palco (checklist de1 minuto)
+## Antes de subir no palco (checklist de 1 minuto)
 
-1. Servidor de pé (`python -m http.server8017`) **ou** `index.html` aberto
+1. Servidor de pé (`python -m http.server 8017`) **ou** `index.html` aberto
    direto pelo `file://` — os dois funcionam para o app.
 2. Estado zerado: rode `http://127.0.0.1:8017/testes/smoke.html` uma vez
    (ele limpa o `localStorage` ao terminar) ou execute `localStorage.clear()`
@@ -13,9 +13,10 @@ Cada bloco amarra um critério do desafio à tela que o prova.
    feita no palco é visível e sobrevive a um F5.
 3. Tema escuro é o padrão (boa projeção); o claro está a um clique no rodapé
    da barra lateral.
-4. Conferir as capturas em `docs/` caso o projetor falhe — os8 PNGs cobrem
+4. Conferir as capturas em `docs/` caso o projetor falhe — os 8 PNGs cobrem
    análise (painel de ditado) e retorno nos dois temas, o caso de bloqueio, o
-   dashboard nos dois temas e a versão de celular; a barra lateral já mostra
+   dashboard nos dois temas e a versão de celular; a barra lateral (ou o topo,
+   no celular) já mostra
    as três telas.
 
 ## Abertura (20 segundos)
@@ -29,7 +30,7 @@ Cada bloco amarra um critério do desafio à tela que o prova.
 
 Tela: `#analise`, estado inicial (fila, prontuário + transcrição visíveis).
 
-## Bloco1 — Fonte rastreável (30 segundos)
+## Bloco 1 — Fonte rastreável (30 segundos)
 
 Critério: *todo insight relevante precisa de origem verificável.*
 
@@ -52,7 +53,7 @@ Demo opcional ao vivo (só com microfone e HTTPS, ex.: GitHub Pages): pressione
 Ctrl+Shift+Espaço, fale uma frase, **Encerrar ditado** → "Transcrição
 concluída" → **Organizar em partes** → **Usar esta transcrição**.
 
-## Bloco2 — Caso de bloqueio (30 segundos)
+## Bloco 2 — Caso de bloqueio (30 segundos)
 
 Critério: *sem evidência suficiente, o sistema não sugere — ele escala para
 humano.*
@@ -60,23 +61,24 @@ humano.*
 Ação: rolar até o cartão vermelho "Uso interrompido de medicamento para dormir".
 
 > "Este caso o copiloto **se recusou** a sugerir qualquer coisa: nenhum dos
-> seis documentos da base casou com o relato, escore0,00 contra o limiar de
->0,28, e o prontuário não registra qual medicamento a paciente usa. O cartão
-> mostra o motivo, aponta as lacunas e só oferece um botão: registrar
-> encaminhamento para revisão humana — com clique, nunca automático."
+> seis documentos da base casou com o relato, escore 0,00 contra o limiar de
+> 0,28, e o prontuário não registra qual medicamento a paciente usa. O cartão
+> mostra o motivo, aponta as lacunas e não oferece aceitar nem ignorar: só
+> registrar encaminhamento para revisão humana — com clique, nunca automático.
+> (Há também **Editar**, que só corrige a redação, como em todo cartão)."
 
 Destaque na tela: "Motivo do bloqueio" + "Encaminhamento humano" +
 botão "Registrar encaminhamento para revisão"
 (captura: `docs/tela-analise-bloqueio-claro.png`).
 
-## Bloco3 — Validação e envio com trava (30 segundos)
+## Bloco 3 — Validação e envio com trava (30 segundos)
 
 Critério: *nenhuma ação externa sem validação explícita do profissional;
 o sistema nunca orienta conduta.*
 
 Ação: tela `#retorno`.
 
-1. Digitar no fim do resumo: "A senhora deve tomar500 mg pela manhã." e clicar
+1. Digitar no fim do resumo: "A senhora deve tomar 500 mg pela manhã." e clicar
    em **Validar registro** → o produto **bloqueia** e explica: contém dose.
 2. Apagar a frase, marcar a caixa de revisão, clicar de novo → vira
    **Validado**, com registro no histórico: "nenhuma mensagem foi enviada
@@ -98,8 +100,10 @@ Captura: `docs/tela-retorno-claro.png`.
 Critério: *número sem amostra e sem leitura é armadilha.*
 
 Clique em **Dashboard da rede** na barra lateral — mesma aplicação, terceira
-tela, sem nenhum dado de paciente. (`https://ruanalmeida.github.io/RRB-AMO/gestao/`
-segue no ar como página própria para o público de coordenação.)
+tela. O conteúdo da tela é de coordenação e não tem dado de paciente — a
+barra lateral, como em toda a aplicação, segue com a fila e o paciente em
+atendimento. (`https://ruanalmeida.github.io/RRB-AMO/gestao/` segue no ar como
+página própria para o público de coordenação, sem fila nem paciente.)
 
 > "Todo número traz selo visível de 'Simulado' e a base que o sustenta. O
 > gráfico tem eixos rotulados, a tabela tem coluna de leitura interpretativa,
@@ -111,7 +115,7 @@ Capturas: `docs/tela-dashboard-claro.png` e `docs/tela-dashboard-escuro.png`.
 
 > "Três limites provados ao vivo: fonte rastreável em cada sugestão, bloqueio
 > quando a evidência falta e validação obrigatória — o WhatsApp só abre
-> depois dela. Fila de três pacientes, estado por paciente, dados100%
+> depois dela. Fila de três pacientes, estado por paciente, dados 100%
 > sintéticos. As pendências — envio programático, LGPD, integração com
 > prontuário — estão no README, declaradas, sem promessa fantasma."
 

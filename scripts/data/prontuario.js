@@ -1,5 +1,5 @@
 /* Prontuários sintéticos — dados de demonstração, sem vínculo com paciente real.
-   A fila tem3 pacientes; CM.data.prontuario é o ponteiro do paciente atual
+   A fila tem 3 pacientes; CM.data.prontuario é o ponteiro do paciente atual
    (app.js troca o ponteiro ao navegar na fila, antes de qualquer render). */
 window.CM = window.CM || {};
 
