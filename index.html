@@ -24,6 +24,11 @@
         <button class="nav__item" type="button" data-tela="retorno">Retorno ao paciente</button>
       </nav>
 
+      <section class="fila" aria-label="Fila de triagem">
+        <p class="fila__titulo">Fila de triagem</p>
+        <ul class="fila__lista" id="fila-lista"></ul>
+      </section>
+
       <div class="sidebar__rodape">
         <div class="contexto" aria-label="Paciente em atendimento">
           <p class="contexto__titulo">Paciente em atendimento</p>
@@ -31,6 +36,7 @@
           <p class="contexto__meta" id="ctx-meta"></p>
           <p class="contexto__aviso">Registro sintético, dado de demonstração</p>
         </div>
+        <button class="btn btn--secundario" type="button" id="btn-finalizar">Finalizar e chamar próximo</button>
         <button class="btn btn--fantasma tema-btn" type="button" id="btn-tema">Usar modo escuro</button>
         <button class="btn btn--fantasma" type="button" id="btn-reiniciar">Reiniciar demonstração</button>
       </div>
@@ -167,7 +173,7 @@
     </main>
   </div>
 
-  <!-- Ordem importa: dados, motor de recuperação, motor de insights, telas -->
+  <!-- Ordem importa: fila, motor de recuperação, motor de insights, telas -->
   <script src="scripts/data/prontuario.js"></script>
   <script src="scripts/data/transcricao.js"></script>
   <script src="scripts/data/base-controlada.js"></script>

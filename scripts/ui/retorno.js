@@ -25,24 +25,24 @@ CM.ui.retorno = (function () {
 
   function montarResumo() {
     const p = CM.data.prontuario;
+    const t = CM.data.transcricao;
     const aceitos = CM.ui.analise.aceitos();
 
-    const relatos = [
-      "Pontada no peito ao subir escada há cerca de três semanas.",
-      "Esquecimento de dias do uso da aspirina na semana passada.",
-      "Uso de chá indicado pela vizinha junto com o remédio da pressão.",
-      "Uma semana sem o remédio de dormir, sem renovação."
-    ];
+    /* relatos = trechos do próprio paciente, sem texto fixo de outro caso */
+    const relatos = t.trechos
+      .filter(function (tr) { return tr.falante === "paciente"; })
+      .map(function (tr) { return tr.texto; });
 
-    const revisados = [
-      "Pressão arterial de 14 por 9 mmHg em 12/03/2026, com relato prévio de dor torácica ao esforço.",
-      "Retorno de 20/01/2026 sem comparecimento.",
-      "Hemoglobina glicada de 8,2% em 10/05/2026, laudo LAB-SINT-1187.",
-      "LDL de 162 mg/dL em 10/05/2026, mesmo laudo.",
-      "Eletrocardiograma de 02/06/2026 com sobrecarga ventricular esquerda."
-    ];
+    /* revisão = histórico e exames do próprio paciente, com fonte e data */
+    const revisados = [];
+    p.historico.forEach(function (h) {
+      revisados.push(u().dataBR(h.data) + ": " + h.evento + " (" + h.fonte + ")");
+    });
+    p.exames.forEach(function (e) {
+      revisados.push(e.tipo + ": " + e.resultado + " (" + u().dataBR(e.data) + ", " + e.fonte + ")");
+    });
 
-    let texto = "Resumo da consulta de 18/09/2026 (dado sintético)\n\n" +
+    let texto = "Resumo da consulta de " + u().dataBR(p.data_consulta) + " (dado sintético)\n\n" +
       p.nome_fictício + ", " + p.idade + " anos, " +
       p.atendimento.toLowerCase() + " na " + p.unidade + ".\n\n" +
       "Relatos desta consulta\n" +
@@ -52,14 +52,13 @@ CM.ui.retorno = (function () {
       "Pontos de atenção aceitos nesta sessão\n";
 
     if (aceitos.length) {
-      texto += aceitos.map(function (t) { return "- " + t; }).join("\n") + "\n\n";
+      texto += aceitos.map(function (t2) { return "- " + t2; }).join("\n") + "\n\n";
     } else {
       texto += "- Nenhum ponto aceito até aqui. Este resumo se apoia só no prontuário e na transcrição.\n\n";
     }
 
     texto += "Próximo passo combinado\n" +
-      "Retorno presencial para revisão do plano em conjunto com a paciente. " +
-      "Qualquer mudança de tratamento é decidida em consulta, por você.\n\n" +
+      "Retorno presencial para revisão do plano em conjunto, com qualquer mudança decidida em consulta, por você.\n\n" +
       "Resumo informativo gerado com dados sintéticos. Não recomenda medicamento nem conduta.";
 
     return texto;

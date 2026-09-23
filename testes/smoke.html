@@ -142,6 +142,17 @@
               !d.querySelector('.nav__item[data-tela="dashboard"]'),
               "dashboard não existe mais no app do médico");
 
+        /* ---------- Fila de triagem (3 pacientes) ---------- */
+        var filaItens = qa("#fila-lista .fila__item");
+        check(filaItens.length === w.CM.data.prontuarios.length,
+              "fila de triagem lista todos os pacientes", "n=" + filaItens.length);
+        check(!!filaItens[0] && /Helena/.test(filaItens[0].textContent) &&
+              filaItens[0].classList.contains("fila__item--atual"),
+              "paciente atual destacado na fila",
+              filaItens[0] ? filaItens[0].textContent.replace(/\s+/g, " ").trim() : "fila vazia");
+        check(!!d.getElementById("btn-finalizar"),
+              "botão finalizar e chamar próximo está na barra lateral");
+
         /* ---------- Tela 3: retorno ao paciente ---------- */
         var status0 = d.getElementById("retorno-status").textContent;
         check(status0.indexOf("Rascunho, não enviado") >= 0, "resumo começa como rascunho não enviado", status0);
@@ -283,10 +294,56 @@
             ruins.join(","));
     }
 
+    function posTroca(w, d) {
+      var q = function (sel) { return d.querySelector(sel); };
+      var qa = function (sel) { return Array.prototype.slice.call(d.querySelectorAll(sel)); };
+
+      /* finalizar guardou Helena e chamou o próximo */
+      var ctx = d.getElementById("ctx-nome").textContent;
+      check(ctx.indexOf("Giovani") >= 0, "finalizar chama o próximo paciente da fila", ctx);
+
+      var itens = qa("#fila-lista .fila__item");
+      var helena = itens.filter(function (b) { return /Helena/.test(b.textContent); })[0];
+      check(!!helena && /atendido/.test(helena.textContent),
+            "paciente finalizado fica marcado como atendido",
+            helena ? helena.textContent.replace(/\s+/g, " ").trim() : "item Helena ausente");
+
+      check(!q(".insight--aceito") && !q(".insight--ignorado") &&
+            /Ainda não executamos o cruzamento/.test(d.getElementById("analise-estado").textContent),
+            "marcações da análise não vazam para o paciente seguinte");
+
+      check(/Rascunho, não enviado/.test(d.getElementById("retorno-status").textContent),
+            "retorno do novo paciente começa em rascunho não enviado",
+            d.getElementById("retorno-status").textContent);
+
+      /* o motor precisa rodar só sobre os dados do paciente da vez */
+      d.getElementById("btn-analisar").click();
+      var ids = qa(".insight").map(function (c) { return c.getAttribute("data-id"); });
+      check(ids.join(",") === "PT-02,PT-05,PT-07",
+            "motor do paciente da fila dispara só as regras dele", ids.join(","));
+      check(qa(".insight--bloqueado").length === 1,
+            "paciente da fila tem o ponto bloqueado dele",
+            "bloqueados=" + qa(".insight--bloqueado").length);
+    }
+
+    function posVolta(w, d) {
+      var q = function (sel) { return d.querySelector(sel); };
+      var ctx = d.getElementById("ctx-nome").textContent;
+      check(ctx.indexOf("Helena") >= 0, "fila volta ao paciente anterior", ctx);
+      check(!!q(".insight--aceito"), "marcações preservadas ao voltar ao paciente anterior");
+      check(/Validado/.test(d.getElementById("retorno-status").textContent),
+            "validação preservada ao voltar ao paciente anterior",
+            d.getElementById("retorno-status").textContent);
+      check(d.getElementById("retorno-log").children.length >= 1 &&
+            d.getElementById("retorno-log").textContent.indexOf("nenhuma mensagem foi enviada") >= 0,
+            "histórico preservado ao voltar ao paciente anterior");
+    }
+
     var fase = 1;
     var frame = document.getElementById("app");
     frame.addEventListener("load", function () {
       var fc = frame.contentWindow;
+      var fd = frame.contentDocument;
       if (fase === 1) {
         /* limpa o estado deixado por execuções anteriores */
         fase = 2;
@@ -297,19 +354,49 @@
       if (fase === 2) {
         /* suíte principal e recarregamento para provar a persistência */
         fase = 3;
-        run(fc, frame.contentDocument);
-        frame.contentWindow.location.reload();
+        run(fc, fd);
+        fc.location.reload();
         return;
       }
       if (fase === 3) {
-        /* persistência provada; agora o botão de reinício */
+        /* persistência provada; finaliza Helena e chama o próximo */
         fase = 4;
         try {
-          persistencia(fc, frame.contentDocument);
-          check(!!frame.contentDocument.getElementById("btn-reiniciar"),
+          persistencia(fc, fd);
+          fc.confirm = function () { return true; };
+          fd.getElementById("btn-finalizar").click();
+        } catch (e) {
+          check(false, "exceção na fase de finalização", String((e && e.stack) || e));
+          try { localStorage.clear(); } catch (e2) {}
+          finalizar();
+        }
+        return;
+      }
+      if (fase === 4) {
+        /* troca provada; volta para o paciente anterior */
+        fase = 5;
+        try {
+          fc.confirm = function () { return true; };
+          posTroca(fc, fd);
+          var volta = Array.prototype.slice.call(fd.querySelectorAll("#fila-lista .fila__item"))
+            .filter(function (b) { return /Helena/.test(b.textContent); })[0];
+          volta.click();
+        } catch (e) {
+          check(false, "exceção na fase de troca", String((e && e.stack) || e));
+          try { localStorage.clear(); } catch (e2) {}
+          finalizar();
+        }
+        return;
+      }
+      if (fase === 5) {
+        /* paciente de volta com estado preservado; agora o reinício */
+        fase = 6;
+        try {
+          posVolta(fc, fd);
+          check(!!fd.getElementById("btn-reiniciar"),
                 "existe botão de reiniciar demonstração");
           fc.confirm = function () { return true; };
-          frame.contentDocument.getElementById("btn-reiniciar").click();
+          fd.getElementById("btn-reiniciar").click();
         } catch (e) {
           check(false, "exceção na fase de reinício", String((e && e.stack) || e));
           try { localStorage.clear(); } catch (e2) {}
@@ -318,7 +405,7 @@
         return;
       }
       try {
-        posReset(fc, frame.contentDocument);
+        posReset(fc, fd);
       } catch (e) {
         check(false, "exceção na checagem pós-reinício", String((e && e.stack) || e));
       }

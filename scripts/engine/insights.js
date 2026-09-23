@@ -65,7 +65,7 @@ CM.insights = (function () {
       exigeApoio: true,
       corpo: function (g) {
         const evento = g.eventos[0];
-        let texto = "A paciente relata pontada no peito ao subir escada há cerca de três semanas. " +
+        let texto = "O relato nesta consulta é de pontada no peito ao subir escada há cerca de três semanas. " +
           "O prontuário já registra dor torácica ao esforço em " + D(evento.data) +
           ", o que faz deste relato uma piora sobre o mesmo ponto, não um sintoma isolado. " +
           "Aqui a decisão de priorizar retorno é sua, com o registro que a base controlada exige.";
@@ -85,13 +85,13 @@ CM.insights = (function () {
         const evento = g.eventos[0];
         return "O prontuário registra retorno agendado em " + D(evento.data) +
           " sem comparecimento e sem motivo. A consulta atual acontece seis meses depois, " +
-          "e a paciente relata piora nesse intervalo. Vale recuperar o motivo da falta no histórico antes de fechar o plano.";
+          "e o relato desta consulta aponta piora nesse intervalo. Vale recuperar o motivo da falta no histórico antes de fechar o plano.";
       },
       fonte: function (g) { return fonteProntuario(g.eventos[0]); }
     },
     {
       id: "PT-03",
-      titulo: "Hemoglobina glicada acima de 7% com pergunta da paciente nesta consulta",
+      titulo: "Hemoglobina glicada acima de 7% com pergunta sobre o resultado nesta consulta",
       exigencias: {
         transcricao: [/a[çc][uú]car/i, /hemoglobina glicada/i],
         prontuario: [/HbA1c/i, /Hemoglobina glicada/i]
@@ -101,7 +101,7 @@ CM.insights = (function () {
       corpo: function (g, apoio) {
         const exame = g.exames[0];
         return "A coleta de " + D(exame.data) + " registra " + exame.tipo + " de " + exame.resultado +
-          ", acima de 7%. A paciente perguntou sobre o resultado na consulta de hoje. " +
+          ", acima de 7%. Há pergunta sobre o resultado na consulta de hoje. " +
           (apoio && apoio.acima
             ? "A base controlada pede comparação com a coleta anterior e discussão em consulta presencial, com a meta definida por você."
             : "");
@@ -119,7 +119,7 @@ CM.insights = (function () {
       exigeApoio: true,
       corpo: function (g) {
         const med = g.medicacoes[0];
-        return "A paciente relata esquecimento de dias da aspirina na semana passada. " +
+        return "O relato é de esquecimento de dias da aspirina na semana passada. " +
           "O prontuário mostra " + med.nome + " em uso contínuo desde " + D(med.inicio) +
           ", após a internação de 03/11/2025. A base controlada trata esse esquecimento como ponto de atenção " +
           "para revisão de adesão em consulta, com validação sua antes de qualquer mudança.";
@@ -137,10 +137,10 @@ CM.insights = (function () {
       exigeApoio: true,
       corpo: function (g) {
         const med = g.medicacoes[0];
-        return "A paciente usa chá indicado pela vizinha junto com o remédio da pressão. " +
+        return "O relato descreve chá indicado pela vizinha junto com o remédio da pressão. " +
           "O prontuário registra " + med.nome + " desde " + D(med.inicio) + ". " +
           "A base controlada exige checagem de interação pelo profissional antes de manter ou alterar qualquer conduta " +
-          "e manda registrar no prontuário a origem da indicação. Suspender ou manter o chá é decisão sua, em conversa com ela.";
+          "e manda registrar no prontuário a origem da indicação. Suspender ou manter o chá é decisão sua, tomada em consulta.";
       },
       fonte: function (_g, apoio) { return fonteBase(apoio.doc); }
     },
@@ -155,7 +155,7 @@ CM.insights = (function () {
       corpo: function (g) {
         const exame = g.exames[0];
         return "O exame de " + D(exame.data) + " registra LDL de " + exame.resultado +
-          ". A paciente tem histórico de síndrome coronariana aguda em 03/11/2025, e para esse perfil a rede busca LDL abaixo de 100 mg/dL. " +
+          ". O prontuário traz histórico de síndrome coronariana aguda em 03/11/2025, e para esse perfil a rede busca LDL abaixo de 100 mg/dL. " +
           "O valor está acima do desejável e entra na sua revisão de conduta.";
       },
       fonte: function (_g, apoio) { return fonteBase(apoio.doc); }
@@ -169,7 +169,7 @@ CM.insights = (function () {
       consulta: "remédio de dormir sono interrompido renovação receita hipnótico insonia",
       exigeApoio: true,
       corpo: function () {
-        return "A paciente relata uma semana sem o remédio de dormir por falta de renovação. " +
+        return "O relato é de uma semana sem o remédio de dormir por falta de renovação. " +
           "O ponto trataria da continuidade do tratamento do sono, mas a evidência disponível não sustenta sugestão.";
       },
       motivo: function (g, apoio) {
@@ -183,7 +183,7 @@ CM.insights = (function () {
         return "A sugestão foi bloqueada por falta de evidência. " +
           "A recuperação na base controlada ficou abaixo do limiar de " + String(CM.rag.LIMIAR).replace(".", ",") +
           ": " + escoreTexto + ". " +
-          "O prontuário também não registra qual medicamento para o sono a paciente usa; " +
+          "O prontuário também não registra qual medicamento para o sono está em uso; " +
           "medicacoes_atuais contém apenas " + nomes + ". " +
           "Sem documento na base controlada e sem registro no prontuário, o copiloto não emite ponto de atenção.";
       },
