@@ -13,11 +13,13 @@ e só depois, da validação.
 > Produto de apoio, não de diagnóstico: sem prescrição, sem orientação automática ao
 > paciente, sem dado real. Toda saída relevante exige validação humana explícita.
 
-São **duas aplicações**:
+São **duas aplicações**, com a tela de gestão também dentro do app do médico:
 
-- **App do médico** (raiz): fila de triagem, análise da consulta e retorno ao paciente.
-- **App de gestão** (`/gestao/`): dashboard populacional para coordenação e diretoria,
-  sem acesso a dados de paciente.
+- **App do médico** (raiz): três telas na mesma barra lateral — análise da
+  consulta, retorno ao paciente e **Dashboard da rede** (a tela de gestão,
+  sem dado de paciente).
+- **App de gestão** (`/gestao/`): a mesma aplicação de gestão como página
+  própria, inalterada, para o público de coordenação e diretoria.
 
 - **Demonstração (médico):** https://ruanalmeida.github.io/RRB-AMO/
 - **Gestão (coordenação):** https://ruanalmeida.github.io/RRB-AMO/gestao/
@@ -45,7 +47,8 @@ barra lateral.
 ### Estado da demonstração
 
 O estado fica salvo em `localStorage` (chaves `copiloto.v1.*`): fila e
-atendimentos por paciente, transcrição em uso (exemplo pronto ou texto colado),
+atendimentos por paciente, transcrição em uso (ditado organizado, exemplo
+pronto ou texto colado),
 marcações de aceitar/ignorar, redações editadas, filtro, texto do resumo,
 histórico de validação e envio, e tema — tudo sobrevive a um F5, paciente por
 paciente. Use `?sem-estado=1` na URL para rodar sem persistência (é o que os
@@ -57,10 +60,15 @@ O app abre direto pelo `file://` (dois cliques em `index.html`) — validado sem
 erros de console. O smoke test, porém, exige servidor HTTP: o harness dirige a
 aplicação por um iframe, que no `file://` é considerado cross-origin.
 
-O visual é 100% offline: as fontes Inter e Source Serif 4 vêm de
-`styles/fontes/` (auto-hospedadas, subconjunto latin) — nada é buscado na
-internet durante a apresentação. A rede só entra no clique de **Enviar ao
-cliente**, quando o WhatsApp é aberto.
+O visual é offline: as fontes Inter e Source Serif 4 vêm de `styles/fontes/`
+(auto-hospedadas, subconjunto latin) — nada é buscado na internet para
+renderizar. A rede só entra em dois pontos, ambos explícitos: **Enviar ao
+cliente** (abre o WhatsApp) e **Ditado da consulta**, porque o
+reconhecimento de fala do Chrome/Edge é um serviço online que exige HTTPS
+(funciona no GitHub Pages; na VM Oracle, configure o certificado conforme
+`deploy/PASSO-A-PASSO-OCI.md`, seção 5.1). Sem microfone ou sem rede, o
+painel oferece o exemplo pronto e a colagem discreta — o pitch não depende
+de rede.
 
 ## Telas
 
@@ -68,14 +76,15 @@ cliente**, quando o WhatsApp é aberto.
 
 | Rota | Tela | O que ela prova no pitch |
 |---|---|---|
-| `#analise` | Análise da consulta | Fila de 3 pacientes; prontuário + transcrição (exemplo pronto ou texto colado) viram pontos de atenção com fonte rastreável (7 para Helena, 3 para Giovani e Tereza); o caso sem evidência fica bloqueado com motivo e vai para revisão humana; todo cartão tem **Editar** |
+| `#analise` | Análise da consulta | Fila de 3 pacientes; transcrição por **ditado ao vivo** (Falar agora ou Ctrl+Shift+Espaço → etapa "Transcrição concluída" → **Organizar em partes** → Usar esta transcrição), com exemplo pronto e colagem discreta como alternativa; prontuário + transcrição viram pontos de atenção com fonte rastreável (7 para Helena, 3 para Giovani e Tereza); o caso sem evidência fica bloqueado com motivo e vai para revisão humana; todo cartão tem **Editar** |
 | `#retorno` | Retorno ao paciente | Resumo editável em três etapas: rascunho, **Validar registro** (revisão marcada + clique, com validador de dose/prescrição/conduta) e **Enviar ao cliente**, que abre o WhatsApp com o texto pronto (`wa.me`) e grava o horário; **Finalizar e chamar próximo** só libera depois do envio |
+| `#dashboard` | Dashboard da rede | A tela de gestão dentro do app do médico: todo número com selo visível de "Simulado" e a amostra que o sustenta; gráfico com eixos rotulados; tabela com coluna de leitura interpretativa; zero botões de ação; nenhum dado de paciente |
 
-### App de gestão (`/gestao/`)
+### App de gestão (`/gestao/`, página própria)
 
 | Rota | Tela | O que ela prova no pitch |
 |---|---|---|
-| dashboard | Dashboard populacional | Todo número com selo visível de "Simulado" e a amostra que o sustenta; gráfico com eixos rotulados; tabela com coluna de leitura interpretativa; zero botões de ação; nenhum dado de paciente |
+| dashboard | Dashboard populacional | Conteúdo idêntico à terceira tela do app do médico, como página independente para o público de coordenação — sem fila, sem paciente, sem botão de ação |
 
 Layout responsivo: abaixo de 860px a barra lateral vira um topo com navegação
 horizontal, as grades viram coluna única e as tabelas do prontuário rolam
@@ -132,7 +141,7 @@ A base controlada deliberadamente **não tem** documento sobre medicamento para 
 
 ```bash
 python -m http.server 8017
-# suíte do app do médico — 89 verificações:
+# suíte do app do médico — 100 verificações:
 #   http://127.0.0.1:8017/testes/smoke.html
 # suíte da aplicação de gestão — 11 verificações:
 #   http://127.0.0.1:8017/testes/smoke-gestao.html
@@ -142,18 +151,20 @@ python -m http.server 8017
 
 O smoke do médico roda a aplicação real em um iframe e cobre, de ponta a ponta:
 estado limpo, suíte principal (fonte rastreável, bloqueio com motivo,
-aceitar/ignorar/editar, transcrição exemplo↔colado, validação em três passos,
-envio `wa.me`), persistência pós-recarregamento, **paciente 2 completo**
-(validação, envio e finalização), **entrada do terceiro paciente** com a fila
-atualizada, **volta ao anterior** com estado preservado e reinício em um
-clique. Ele limpa o `localStorage` ao iniciar e ao terminar, então rodar o
-teste zera o estado da demonstração.
+aceitar/ignorar/editar, ditado ao vivo — atalho, estados e organizador em
+partes —, transcrição exemplo↔colado, dashboard como terceira tela, validação
+em três passos, envio `wa.me`), persistência pós-recarregamento, **paciente 2
+completo** (validação, envio e finalização), **entrada do terceiro paciente**
+com a fila atualizada, **volta ao anterior** com estado preservado e reinício
+em um clique. Ele limpa o `localStorage` ao iniciar e ao terminar, então rodar
+o teste zera o estado da demonstração.
 
-Última execução: **médico `ALL PASS 89 testes`**, **gestão `ALL PASS 11 testes`**.
+Última execução: **médico `ALL PASS 100 testes`**, **gestão `ALL PASS 11 testes`**.
 
-As 8 capturas finais estão em `docs/`, prontas para os slides: análise
-(claro/escuro), análise com o caso bloqueado, retorno (claro/escuro), dashboard
-da gestão (claro/escuro) e análise em 390px. O harness `testes/shots.html`
+As 8 capturas finais estão em `docs/`, prontas para os slides: análise com o
+painel de ditado aberto (claro/escuro), análise com o caso bloqueado, retorno
+(claro/escuro), dashboard da rede (claro/escuro) e análise em 390px — todas com
+a barra lateral de três telas. O harness `testes/shots.html`
 aceita `?tema=claro|escuro`, `?hash=`, `?analisar=1`, `?scroll=` e
 `?app=gestao` (padrão claro, porque o Chrome headless nasce no modo escuro).
 **Regenere uma captura por vez, em processos separados**: Chromes em paralelo
@@ -177,7 +188,7 @@ o teste e a captura que o provam — está em `docs/matriz-de-aderencia.md`.
 ## Estrutura
 
 ```
-index.html                    casca do app do médico: sidebar + duas telas + fila
+index.html                    casca do app do médico: sidebar + três telas + fila
 gestao/index.html             aplicação de gestão (dashboard populacional)
 styles/tokens.css             tokens base + pares de sinalização + dark mode
 styles/app.css                layout, painéis, insights, fila, KPIs, gráfico
@@ -186,12 +197,13 @@ styles/fontes/                Inter e Source Serif 4 (woff2, subconjunto latin)
 scripts/data/                 prontuários (3), transcrições (3), base, dashboard
 scripts/engine/rag.js         recuperação TF-IDF em memória
 scripts/engine/insights.js    regras de pontos de atenção
+scripts/engine/organizar.js    limpa o ditado e o separa em partes rotuladas
 scripts/ui/analise.js         tela 1 (transcrição, cartões, editar redação)
 scripts/ui/dashboard.js       dashboard da gestão (KPIs, SVG, tabela)
 scripts/ui/retorno.js         tela 2 (geração, validação, envio wa.me, histórico)
 scripts/ui/util.js            store (localStorage com prefixo copiloto.v1)
 scripts/app.js                navegação, tema, fila de triagem, contexto
-testes/smoke.html             suíte do médico: 89 verificações
+testes/smoke.html             suíte do médico: 100 verificações
 testes/smoke-gestao.html      suíte da gestão: 11 verificações
 testes/shots.html             harness de captura (aceita ?app=gestao)
 testes/mobile.html            medidor e captura móvel em 390px reais

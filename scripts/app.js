@@ -1,6 +1,6 @@
 /* Navegação, tema e inicialização das telas. */
 (function () {
-  const TELAS = ["analise", "retorno"];
+  const TELAS = ["analise", "retorno", "dashboard"];
 
   function mostrar(nome) {
     TELAS.forEach(function (t) {

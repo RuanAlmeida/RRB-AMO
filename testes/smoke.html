@@ -74,6 +74,54 @@
               /Em uso: exemplo pronto/.test(d.getElementById("painel-transcricao").textContent),
               "voltar ao exemplo restaura a transcrição e zera a análise");
 
+        /* ---------- Ditado ao vivo (fluxo principal de transcrição) ---------- */
+        w.confirm = function () { return true; };
+        d.querySelector('[data-transc="ver-ditado"]').click();
+        check(!!d.getElementById("btn-ditado") &&
+              /Falar agora/.test(d.getElementById("btn-ditado").textContent),
+              "visão de ditado abre com o botão Falar agora");
+        var Fake = function () { this.onresult = null; this.onend = null; };
+        Fake.prototype.start = function () {
+          if (!this.onresult) return;
+          this.onresult({ resultIndex: 0, results: [{
+            isFinal: true, length: 1,
+            0: { transcript: "Relato de pontada no peito ao subir escada desde a última visita. Paciente nega outros sintomas." }
+          }] });
+        };
+        Fake.prototype.stop = function () { if (this.onend) this.onend(); };
+        Fake.prototype.abort = Fake.prototype.stop;
+        w.SpeechRecognition = Fake;
+        try { delete w.webkitSpeechRecognition; } catch (eS) { w.webkitSpeechRecognition = undefined; }
+        d.dispatchEvent(new w.KeyboardEvent("keydown", {
+          key: " ", code: "Space", ctrlKey: true, shiftKey: true, bubbles: true, cancelable: true
+        }));
+        check(/Ouvindo/.test(d.getElementById("painel-transcricao").textContent),
+              "Ctrl+Shift+Espaço inicia o ditado");
+        check(!!d.getElementById("ditado-texto") &&
+              d.getElementById("ditado-texto").value.indexOf("pontada no peito") >= 0,
+              "a fala entra na transcrição ao vivo");
+        d.getElementById("btn-ditado").click();
+        check(/Transcrição concluída/.test(d.getElementById("ditado-estado").textContent),
+              "encerrar marca a transcrição como concluída com horário");
+        d.querySelector('[data-transc="organizar"]').click();
+        check(d.querySelectorAll("#ditado-partes .parte").length >= 2 &&
+              d.getElementById("ditado-partes").textContent.indexOf("Motivo da queixa") >= 0,
+              "organizar separa a fala em partes rotuladas");
+        check(!!d.getElementById("parte-texto-0"),
+              "cada parte organizada fica editável");
+        d.getElementById("btn-usar-ditado").click();
+        check(/Em uso: ditado/.test(d.getElementById("painel-transcricao").textContent),
+              "usar esta transcrição torna o ditado a transcrição em uso");
+        d.getElementById("btn-analisar").click();
+        var idsDit = qa(".insight").map(function (c) { return c.getAttribute("data-id"); });
+        check(idsDit.indexOf("PT-01") >= 0,
+              "motor roda sobre o ditado organizado", idsDit.join(","));
+        d.querySelector('[data-transc="ver-exemplo"]').click();
+        d.querySelector('[data-transc="usar-exemplo"]').click();
+        check(/Em uso: exemplo pronto/.test(d.getElementById("painel-transcricao").textContent) &&
+              /Ainda não executamos/.test(d.getElementById("analise-estado").textContent),
+              "suíte volta ao exemplo pronto para seguir o fluxo");
+
         d.getElementById("btn-analisar").click();
 
         var cards = qa(".insight");
@@ -165,10 +213,19 @@
           }
         }
 
-        /* o dashboard saiu deste app: virou aplicação de gestão própria */
-        check(!d.getElementById("tela-dashboard") &&
-              !d.querySelector('.nav__item[data-tela="dashboard"]'),
-              "dashboard não existe mais no app do médico");
+        /* o dashboard voltou: agora é a terceira tela do app unificado */
+        check(!!d.querySelector('.nav__item[data-tela="dashboard"]') &&
+              !!d.getElementById("tela-dashboard"),
+              "dashboard é a terceira tela do app do médico");
+        q('.nav__item[data-tela="dashboard"]').click();
+        check(!d.getElementById("tela-dashboard").hidden &&
+              d.getElementById("tela-analise").hidden,
+              "navegar para Dashboard da rede abre a tela de gestão");
+        check(d.getElementById("kpis").children.length > 0 &&
+              !!d.querySelector("#grafico svg") &&
+              d.querySelectorAll("#tabela-gestao tbody tr").length > 0,
+              "dashboard renderiza kpis, gráfico e tabela no app unificado");
+        q('.nav__item[data-tela="analise"]').click();
 
         /* ---------- Fila de triagem (3 pacientes) ---------- */
         var filaItens = qa("#fila-lista .fila__item");

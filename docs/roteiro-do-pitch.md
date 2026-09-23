@@ -14,8 +14,9 @@ Cada bloco amarra um critério do desafio à tela que o prova.
 3. Tema escuro é o padrão (boa projeção); o claro está a um clique no rodapé
    da barra lateral.
 4. Conferir as capturas em `docs/` caso o projetor falhe — os8 PNGs cobrem
-   análise e retorno nos dois temas, o caso de bloqueio, o dashboard da gestão
-   nos dois temas e a versão de celular.
+   análise (painel de ditado) e retorno nos dois temas, o caso de bloqueio, o
+   dashboard nos dois temas e a versão de celular; a barra lateral já mostra
+   as três telas.
 
 ## Abertura (20 segundos)
 
@@ -42,8 +43,14 @@ paciente atual (sete para Helena).
 > **Editar**."
 
 Destaque na tela: cartão pendente com "Fonte rastreável" e citação; citar o
-alternador **Exemplo da consulta / Colar transcrição** (captura:
+painel **Ditado da consulta** — **Falar agora** ou **Ctrl+Shift+Espaço**, a
+etapa "Transcrição concluída" e o organizador em partes — e o **Exemplo da
+consulta** ao lado, que garante a demonstração sem microfone (captura:
 `docs/tela-analise-claro.png`).
+
+Demo opcional ao vivo (só com microfone e HTTPS, ex.: GitHub Pages): pressione
+Ctrl+Shift+Espaço, fale uma frase, **Encerrar ditado** → "Transcrição
+concluída" → **Organizar em partes** → **Usar esta transcrição**.
 
 ## Bloco2 — Caso de bloqueio (30 segundos)
 
@@ -90,8 +97,9 @@ Captura: `docs/tela-retorno-claro.png`.
 
 Critério: *número sem amostra e sem leitura é armadilha.*
 
-Abra `https://ruanalmeida.github.io/RRB-AMO/gestao/` — aplicação separada,
-sem nenhum dado de paciente.
+Clique em **Dashboard da rede** na barra lateral — mesma aplicação, terceira
+tela, sem nenhum dado de paciente. (`https://ruanalmeida.github.io/RRB-AMO/gestao/`
+segue no ar como página própria para o público de coordenação.)
 
 > "Todo número traz selo visível de 'Simulado' e a base que o sustenta. O
 > gráfico tem eixos rotulados, a tabela tem coluna de leitura interpretativa,

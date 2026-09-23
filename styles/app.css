@@ -1068,3 +1068,16 @@ button {
     flex-direction: column;
   }
 }
+
+/* ---------------------------- Ditado da consulta ---------------------------- */
+
+.ditado-partes {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 10px;
+}
+
+.parte .campo-texto {
+  margin-top: 6px;
+}

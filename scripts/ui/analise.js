@@ -80,11 +80,17 @@ CM.ui.analise = (function () {
   }
 
   /* ---------------- Transcrição ----------------
-     Duas origens possíveis: o exemplo pronto da consulta (padrão) ou um
-     texto colado pelo profissional. O estado vale para o paciente da vez
+     Três origens: ditado ao vivo (fluxo principal), exemplo pronto da
+     consulta (padrão de demonstração) e texto colado (alternativa
+     discreta, para sem microfone). O estado vale para o paciente da vez
      (chave "transcricao", trocada junto com a fila) e trocar de origem
      zera a análise anterior, porque o motor lê a transcrição. */
-  let visaoTranscricao = "exemplo";
+  let visaoTranscricao = "ditado";
+
+  /* estado do ditado desta sessão; o texto aplicado vive na store */
+  const ditado = { estado: "ocioso", bruto: "", parcial: "", em: "", partes: null, erro: "" };
+  let reconhecedor = null;
+  let querendoOuvir = false;
 
   function trechosDoTexto(texto) {
     return texto.split(/\n+/)
@@ -101,7 +107,7 @@ CM.ui.analise = (function () {
 
   function estadoTranscricao() {
     const salvo = CM.store.ler("transcricao");
-    if (salvo && salvo.modo === "colado" && salvo.texto) return salvo;
+    if (salvo && (salvo.modo === "colado" || salvo.modo === "ditado") && salvo.texto) return salvo;
     return { modo: "exemplo" };
   }
 
@@ -111,7 +117,9 @@ CM.ui.analise = (function () {
     const t = CM.data.transcricao;
     if (!t._exemplo) t._exemplo = t.trechos;
     const est = estadoTranscricao();
-    t.trechos = est.modo === "colado" ? trechosDoTexto(est.texto) : t._exemplo;
+    t.trechos = (est.modo === "colado" || est.modo === "ditado")
+      ? trechosDoTexto(est.texto)
+      : t._exemplo;
   }
 
   function reiniciarAnalise() {
@@ -145,9 +153,85 @@ CM.ui.analise = (function () {
     if (!alvo) return;
     const tipo = alvo.dataset.transc;
 
-    if (tipo === "ver-exemplo" || tipo === "ver-colar") {
-      visaoTranscricao = tipo === "ver-colar" ? "colar" : "exemplo";
+    if (tipo === "ver-exemplo" || tipo === "ver-colar" || tipo === "ver-ditado") {
+      /* trocar de visão encerra um ditado em andamento */
+      if (tipo !== "ver-ditado" && ditado.estado === "ouvindo") encerrarDitado();
+      visaoTranscricao = tipo === "ver-exemplo" ? "exemplo"
+        : tipo === "ver-colar" ? "colar" : "ditado";
       mostrarErroTranscricao("");
+      renderTranscricao();
+      return;
+    }
+
+    if (tipo === "ditado-toggle") {
+      alternarDitado();
+      return;
+    }
+
+    if (tipo === "organizar") {
+      const campo = document.getElementById("ditado-texto");
+      const texto = (campo ? campo.value : ditado.bruto).trim();
+      if (!texto) {
+        ditado.erro = "Não há fala para organizar. Toque em Falar agora e fale.";
+        renderTranscricao();
+        return;
+      }
+      ditado.bruto = texto;
+      ditado.partes = CM.organizar.separar(CM.organizar.limpar(texto));
+      if (!ditado.partes.length) {
+        ditado.erro = "Não captamos fala reconhecível para separar em partes.";
+        renderTranscricao();
+        return;
+      }
+      ditado.erro = "";
+      ditado.estado = "organizado";
+      renderTranscricao();
+      return;
+    }
+
+    if (tipo === "ditado-refazer") {
+      ditado.estado = "concluido";
+      ditado.partes = null;
+      renderTranscricao();
+      return;
+    }
+
+    if (tipo === "usar-ditado") {
+      const partes = (ditado.partes || []).map(function (p, i) {
+        const campo = document.getElementById("parte-texto-" + i);
+        return { rotulo: p.rotulo, texto: (campo ? campo.value : p.texto).trim() };
+      }).filter(function (p) { return p.texto; });
+      if (!partes.length) {
+        ditado.erro = "Escreva o conteúdo de ao menos uma parte antes de usar.";
+        renderTranscricao();
+        return;
+      }
+      const ok = window.confirm(
+        "Usar esta transcrição organizada como transcrição da consulta? A análise atual será refeita com ela."
+      );
+      if (!ok) return;
+      const texto = partes.map(function (p) { return p.rotulo + ": " + p.texto; }).join("\n");
+      definirTranscricao({ modo: "ditado", texto: texto });
+      ditado.estado = "ocioso";
+      ditado.bruto = "";
+      ditado.parcial = "";
+      ditado.partes = null;
+      ditado.em = "";
+      ditado.erro = "";
+      visaoTranscricao = "ditado";
+      renderTranscricao();
+      return;
+    }
+
+    if (tipo === "ditado-descartar") {
+      const ok = window.confirm("Descartar este ditado? O texto capturado será perdido.");
+      if (!ok) return;
+      ditado.estado = "ocioso";
+      ditado.bruto = "";
+      ditado.parcial = "";
+      ditado.partes = null;
+      ditado.em = "";
+      ditado.erro = "";
       renderTranscricao();
       return;
     }
@@ -179,10 +263,135 @@ CM.ui.analise = (function () {
     renderTranscricao();
   }
 
+  /* ---------------- Ditado ao vivo ----------------
+     Web Speech API (Chrome/Edge, pt-BR). Estados: ocioso → ouvindo →
+     concluído (etapa "transcrição feita") → organizado (partes
+     rotuladas pelo CM.organizar). O atalho Ctrl+Shift+Espaço funciona
+     com a aba em foco; atalho global de sistema não existe para web. */
+  function temDitado() {
+    return !!(window.SpeechRecognition || window.webkitSpeechRecognition);
+  }
+
+  function linhasDitadas() {
+    return ditado.bruto.split("\n").map(function (l) { return l.trim(); }).filter(Boolean);
+  }
+
+  function iniciarDitado() {
+    if (!temDitado()) {
+      ditado.erro = "Este navegador não faz ditado. Use Chrome ou Edge — ou cole o texto na alternativa abaixo.";
+      renderTranscricao();
+      return;
+    }
+    const Classe = window.SpeechRecognition || window.webkitSpeechRecognition;
+    reconhecedor = new Classe();
+    reconhecedor.lang = "pt-BR";
+    reconhecedor.continuous = true;
+    reconhecedor.interimResults = true;
+    reconhecedor.onresult = function (evento) {
+      for (let i = evento.resultIndex; i < evento.results.length; i++) {
+        const r = evento.results[i];
+        const texto = r[0] ? r[0].transcript : "";
+        if (r.isFinal) {
+          if (texto.trim()) {
+            ditado.bruto += (ditado.bruto ? "\n" : "") + texto.trim();
+            const campo = document.getElementById("ditado-texto");
+            if (campo) campo.value = ditado.bruto;
+          }
+        } else if (ditado.estado === "ouvindo") {
+          ditado.parcial = texto;
+          const est = document.getElementById("ditado-estado");
+          if (est) est.textContent = "Ouvindo… " + texto;
+        }
+      }
+    };
+    reconhecedor.onerror = function (evento) {
+      const cod = evento && evento.error;
+      if (cod === "not-allowed" || cod === "service-not-allowed") {
+        ditado.erro = "Microfone bloqueado. Permita o acesso ou use “Sem microfone? Cole o texto”.";
+      } else if (cod && cod !== "no-speech" && cod !== "aborted") {
+        ditado.erro = "Ditado interrompido (" + cod + "). Toque em Falar agora para recomeçar.";
+      }
+      querendoOuvir = false;
+    };
+    reconhecedor.onend = function () {
+      if (querendoOuvir) {
+        /* o Chrome encerra sozinho após um silêncio; seguimos ouvindo */
+        try { reconhecedor.start(); } catch (eIgn) { /* já ativo */ }
+        return;
+      }
+      concluirDitado();
+    };
+    ditado.erro = "";
+    ditado.parcial = "";
+    ditado.partes = null;
+    ditado.estado = "ouvindo";
+    querendoOuvir = true;
+    renderTranscricao();
+    try {
+      reconhecedor.start();
+    } catch (eIni) {
+      ditado.erro = "Não foi possível abrir o microfone. (" + eIni + ")";
+      querendoOuvir = false;
+      ditado.estado = ditado.bruto.trim() ? "concluido" : "ocioso";
+      if (ditado.estado === "concluido") ditado.em = CM.util.agora();
+      renderTranscricao();
+    }
+  }
+
+  function concluirDitado() {
+    querendoOuvir = false;
+    if (reconhecedor) {
+      reconhecedor.onend = null;
+      reconhecedor.onerror = null;
+      reconhecedor = null;
+    }
+    if (ditado.estado !== "ouvindo") return;
+    if (ditado.bruto.trim()) {
+      ditado.estado = "concluido";
+      ditado.em = CM.util.agora();
+    } else {
+      ditado.estado = "ocioso";
+      if (!ditado.erro) ditado.erro = "Não captamos fala. Verifique o microfone e tente de novo.";
+    }
+    renderTranscricao();
+  }
+
+  function encerrarDitado() {
+    querendoOuvir = false;
+    if (!reconhecedor) { concluirDitado(); return; }
+    try {
+      reconhecedor.stop();
+    } catch (eStop) {
+      concluirDitado();
+    }
+  }
+
+  function alternarDitado() {
+    if (ditado.estado === "ouvindo") { encerrarDitado(); return; }
+    if (ditado.estado === "organizado") return;
+    iniciarDitado();
+  }
+
+  function estadoDitadoTexto() {
+    if (ditado.estado === "ouvindo") return "Ouvindo… fale naturalmente.";
+    if (ditado.estado === "concluido") {
+      const n = linhasDitadas().length;
+      return "Transcrição concluída às " + ditado.em + " (" + n +
+        (n === 1 ? " linha" : " linhas") + "). Organize em partes para usá-la.";
+    }
+    if (ditado.estado === "organizado") {
+      return "Transcrição organizada em " + (ditado.partes ? ditado.partes.length : 0) +
+        " partes. Revise cada uma e use quando quiser.";
+    }
+    return temDitado()
+      ? "Pronto para o ditado: clique em Falar agora ou use Ctrl+Shift+Espaço com esta aba em foco."
+      : "Ditado indisponível neste navegador (use Chrome ou Edge). Cole o texto abaixo, se precisar.";
+  }
+
   function renderTranscricao() {
     const t = CM.data.transcricao;
     const est = estadoTranscricao();
-    const emUsoColado = est.modo === "colado";
+    const emUso = est.modo;   /* exemplo | colado | ditado */
     const exemplo = t._exemplo || t.trechos;
 
     const trechos = exemplo.map(function (tr) {
@@ -195,41 +404,99 @@ CM.ui.analise = (function () {
       "</div>";
     }).join("");
 
-    const visao = visaoTranscricao === "colar"
-      ? '<label class="rotulo-campo" for="transcricao-texto">Texto da transcrição</label>' +
+    let visao = "";
+    if (visaoTranscricao === "ditado") {
+      let corpo;
+      if (ditado.estado === "ocioso") {
+        corpo = temDitado()
+          ? '<div class="acoes-painel">' +
+              '<button class="btn btn--primario" type="button" id="btn-ditado" data-transc="ditado-toggle">Falar agora</button>' +
+            "</div>"
+          : '<p class="painel__nota">Este navegador não faz ditado. Use Chrome ou Edge — cole o texto na alternativa abaixo.</p>';
+      } else if (ditado.estado === "ouvindo") {
+        corpo =
+          '<label class="rotulo-campo" for="ditado-texto">Transcrição ao vivo</label>' +
+          '<textarea class="campo-texto" id="ditado-texto" rows="8" readonly spellcheck="false">' +
+            u().esc(ditado.bruto) + "</textarea>" +
+          '<div class="acoes-painel">' +
+            '<button class="btn btn--secundario" type="button" id="btn-ditado" data-transc="ditado-toggle">Encerrar ditado</button>' +
+          "</div>";
+      } else if (ditado.estado === "concluido") {
+        corpo =
+          '<label class="rotulo-campo" for="ditado-texto">Fala capturada (corrija se quiser; organizar é a etapa seguinte)</label>' +
+          '<textarea class="campo-texto" id="ditado-texto" rows="8" spellcheck="false">' +
+            u().esc(ditado.bruto) + "</textarea>" +
+          '<div class="acoes-painel">' +
+            '<button class="btn btn--primario" type="button" id="btn-organizar" data-transc="organizar">Organizar em partes</button>' +
+            '<button class="btn btn--fantasma" type="button" data-transc="ditado-descartar">Descartar</button>' +
+          "</div>";
+      } else {
+        corpo =
+          '<p class="painel__nota">Separação automática da fala. Corrija o que quiser: nada vira transcrição sem você mandar.</p>' +
+          '<div class="ditado-partes" id="ditado-partes">' +
+            (ditado.partes || []).map(function (p, i) {
+              return '<div class="parte">' +
+                '<label class="rotulo-campo" for="parte-texto-' + i + '">' + u().esc(p.rotulo) + "</label>" +
+                '<textarea class="campo-texto" id="parte-texto-' + i + '" rows="3" spellcheck="false">' +
+                  u().esc(p.texto) + "</textarea>" +
+              "</div>";
+            }).join("") +
+          "</div>" +
+          '<div class="acoes-painel">' +
+            '<button class="btn btn--primario" type="button" id="btn-usar-ditado" data-transc="usar-ditado">Usar esta transcrição</button>' +
+            '<button class="btn btn--secundario" type="button" data-transc="ditado-refazer">Voltar ao texto bruto</button>' +
+          "</div>";
+      }
+      visao =
+        '<p class="painel__nota" id="ditado-estado">' + u().esc(estadoDitadoTexto()) + "</p>" +
+        corpo +
+        '<div class="erro" id="ditado-erro"' + (ditado.erro ? "" : " hidden") +
+          ' role="alert">' + u().esc(ditado.erro) + "</div>" +
+        '<div class="acoes-painel">' +
+          '<button class="btn btn--fantasma" type="button" data-transc="ver-colar">Sem microfone? Cole o texto</button>' +
+        "</div>";
+    } else if (visaoTranscricao === "colar") {
+      visao =
+        '<label class="rotulo-campo" for="transcricao-texto">Texto da transcrição</label>' +
         '<textarea class="campo-texto" id="transcricao-texto" rows="8" spellcheck="false" ' +
           'placeholder="Cole aqui a transcrição da consulta. Uma linha por fala.">' +
-          u().esc(emUsoColado ? est.texto : "") + "</textarea>" +
+          u().esc(emUso === "colado" ? est.texto : "") + "</textarea>" +
         '<div class="erro" id="transcricao-erro" hidden role="alert"></div>' +
         '<div class="acoes-painel">' +
           '<button class="btn btn--primario" type="button" data-transc="aplicar">Usar este texto</button>' +
-        "</div>"
-      : '<div class="transcricao">' + trechos + "</div>" +
-        (emUsoColado
+          '<button class="btn btn--fantasma" type="button" data-transc="ver-ditado">Voltar ao ditado</button>' +
+        "</div>";
+    } else {
+      visao = '<div class="transcricao">' + trechos + "</div>" +
+        (emUso !== "exemplo"
           ? '<div class="acoes-painel">' +
               '<button class="btn btn--secundario" type="button" data-transc="usar-exemplo">' +
                 "Usar o exemplo da consulta</button>" +
             "</div>"
           : "");
+    }
 
     document.getElementById("painel-transcricao").innerHTML =
       '<div class="painel__cabecalho">' +
         '<h2 class="painel__titulo">Transcrição da consulta</h2>' +
-        '<span class="selo">' + (emUsoColado ? "Texto colado" : "Exemplo pronto") + "</span>" +
+        '<span class="selo">' + (emUso === "ditado" ? "Ditado organizado"
+          : emUso === "colado" ? "Texto colado" : "Exemplo pronto") + "</span>" +
       "</div>" +
       '<p class="painel__nota">Consulta de ' + u().dataBR(t.data) +
         ", duração estimada de " + u().esc(t.duracao) +
         ", identificador " + u().esc(t.consulta_id) + ".</p>" +
       '<div class="alternador" role="group" aria-label="Origem da transcrição">' +
+        '<button class="alternador__opcao' + (visaoTranscricao === "ditado" ? " alternador__opcao--ativo" : "") +
+          '" type="button" data-transc="ver-ditado" aria-pressed="' + (visaoTranscricao === "ditado") +
+          '">Ditado da consulta</button>' +
         '<button class="alternador__opcao' + (visaoTranscricao === "exemplo" ? " alternador__opcao--ativo" : "") +
           '" type="button" data-transc="ver-exemplo" aria-pressed="' + (visaoTranscricao === "exemplo") +
           '">Exemplo da consulta</button>' +
-        '<button class="alternador__opcao' + (visaoTranscricao === "colar" ? " alternador__opcao--ativo" : "") +
-          '" type="button" data-transc="ver-colar" aria-pressed="' + (visaoTranscricao === "colar") +
-          '">Colar transcrição</button>' +
       "</div>" +
       '<p class="painel__nota" id="transcricao-em-uso">Em uso: ' +
-        (emUsoColado ? "texto colado pelo profissional" : "exemplo pronto da consulta") + ".</p>" +
+        (emUso === "ditado" ? "ditado da consulta (organizado)"
+          : emUso === "colado" ? "texto colado pelo profissional"
+          : "exemplo pronto da consulta") + ".</p>" +
       visao;
   }
 
@@ -548,6 +815,19 @@ CM.ui.analise = (function () {
     document.getElementById("lista-insights").addEventListener("click", delegar);
     document.getElementById("filtros").addEventListener("click", filtrar);
     document.getElementById("painel-transcricao").addEventListener("click", onTranscricao);
+
+    /* atalho do ditado: Ctrl+Shift+Espaço com esta aba em foco
+       (atalho global de sistema não existe para página web) */
+    document.addEventListener("keydown", function (e) {
+      if (!e || !e.ctrlKey || !e.shiftKey) return;
+      if (e.code !== "Space" && e.key !== " " && e.key !== "Spacebar") return;
+      const alvo = e.target;
+      if (alvo && (alvo.tagName === "INPUT" || alvo.tagName === "TEXTAREA" || alvo.isContentEditable)) return;
+      if (document.getElementById("tela-analise").hidden) return;
+      if (visaoTranscricao !== "ditado") return;
+      e.preventDefault();
+      alternarDitado();
+    });
   }
 
   function aceitos() {
