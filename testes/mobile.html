@@ -22,8 +22,18 @@
     if (p.get("h")) frame.style.height = parseInt(p.get("h"), 10) + "px";
     frame.src = "../index.html?sem-estado=1#" + (p.get("hash") || "analise");
 
-    frame.addEventListener("load", function () {
-      var d = frame.contentDocument;
+    var tentativas = 0;
+    function medir() {
+      tentativas++;
+      var d = null;
+      try { d = frame.contentDocument; } catch (e0) { d = null; }
+      var nome = d ? d.getElementById("ctx-nome") : null;
+      if (!nome || nome.textContent === "Carregando") {
+        if (tentativas >= 100) { document.title = "FAIL app não inicializou"; return; }
+        if (!d || tentativas % 10 === 0) { try { frame.src = frame.src; } catch (e1) {} }
+        setTimeout(medir, 100);
+        return;
+      }
       if (p.get("analisar") === "1") {
         d.getElementById("btn-analisar").click();
       }
@@ -42,7 +52,9 @@
       document.title = (raiz.scrollWidth <= 390 ? "OK" : "OVERFLOW") +
         " scrollW=" + raiz.scrollWidth +
         (alargos.length ? " | " + alargos.slice(0, 6).join(" | ") : "");
-    });
+    }
+
+    frame.addEventListener("load", function () { medir(); });
   </script>
 </body>
 </html>

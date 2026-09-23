@@ -415,6 +415,33 @@
       /* a transcrição (exemplo ou texto colado) acompanha a troca */
       check(w.localStorage.getItem("copiloto.v1.transcricao") !== null,
             "transcrição acompanha a troca de paciente");
+
+      /* segundo paciente completo: retorno validado e enviado (bateria de 2 pacientes) */
+      w.confirm = function () { return true; };
+      var abertos = [];
+      w.open = function (u) { abertos.push(u); return null; };
+      var chk2 = d.getElementById("chk-revisao");
+      chk2.checked = true;
+      chk2.dispatchEvent(new Event("change"));
+      d.getElementById("btn-validar").click();
+      var stVal = d.getElementById("retorno-status").textContent;
+      check(/Validado/.test(stVal),
+            "paciente 2: validação humana registra o retorno", stVal);
+      d.getElementById("btn-enviar").click();
+      check(abertos.length === 1 && /^https:\/\/wa\.me\/\?text=/.test(abertos[0]),
+            "paciente 2: envio abre o WhatsApp com o texto pronto",
+            abertos.join(" | "));
+      var stEnv = d.getElementById("retorno-status").textContent;
+      check(/Validado e enviado/.test(stEnv),
+            "paciente 2: status passa a enviado com a hora", stEnv);
+      check(d.getElementById("retorno-log").textContent.indexOf("WhatsApp aberto com o texto pronto") >= 0,
+            "paciente 2: histórico registra o envio pelo WhatsApp");
+      var chip2 = d.querySelector(".fila__item--atual .fila__status");
+      check(!!chip2 && /retorno enviado/.test(chip2.textContent),
+            "paciente 2: chip da fila marca retorno enviado",
+            chip2 ? chip2.textContent : "chip ausente");
+      check(!d.getElementById("btn-finalizar").disabled,
+            "paciente 2: envio libera o botão de finalizar");
     }
 
     function posVolta(w, d) {
@@ -428,6 +455,33 @@
       check(d.getElementById("retorno-log").children.length >= 1 &&
             d.getElementById("retorno-log").textContent.indexOf("nenhuma mensagem foi enviada") >= 0,
             "histórico preservado ao voltar ao paciente anterior");
+    }
+
+    function posTereza(w, d) {
+      var qa = function (sel) { return d.querySelectorAll(sel); };
+      var ctx = d.getElementById("ctx-nome").textContent;
+      check(ctx.indexOf("Tereza") >= 0,
+            "terceiro paciente entra ao concluir o segundo", ctx);
+
+      var atendidos = Array.prototype.slice.call(qa("#fila-lista .fila__item"))
+        .filter(function (b) { return /atendido/.test(b.textContent); });
+      check(atendidos.length === 2,
+            "dois pacientes concluídos aparecem como atendidos",
+            "atendidos=" + atendidos.length);
+
+      check(/Rascunho, não enviado/.test(d.getElementById("retorno-status").textContent),
+            "terceiro paciente começa com retorno não enviado",
+            d.getElementById("retorno-status").textContent);
+
+      check(/Ainda não executamos o cruzamento/.test(d.getElementById("analise-estado").textContent) &&
+            qa(".insight").length === 0,
+            "terceiro paciente começa sem análise executada",
+            d.getElementById("analise-estado").textContent);
+
+      check(d.getElementById("btn-finalizar").disabled,
+            "finalizar travado até o envio do terceiro");
+      check(!d.getElementById("finalizar-aviso").hidden,
+            "aviso de liberação fica visível para o terceiro");
     }
 
     var fase = 1;
@@ -464,11 +518,25 @@
         return;
       }
       if (fase === 4) {
-        /* troca provada; volta para o paciente anterior */
+        /* segundo paciente completo: validação, envio e finalização */
         fase = 5;
         try {
           fc.confirm = function () { return true; };
           posTroca(fc, fd);
+          fd.getElementById("btn-finalizar").click();
+        } catch (e) {
+          check(false, "exceção na fase do segundo paciente", String((e && e.stack) || e));
+          try { localStorage.clear(); } catch (e2) {}
+          finalizar();
+        }
+        return;
+      }
+      if (fase === 5) {
+        /* terceiro paciente entrou; volta ao anterior para conferir preservação */
+        fase = 6;
+        try {
+          posTereza(fc, fd);
+          fc.confirm = function () { return true; };
           var volta = Array.prototype.slice.call(fd.querySelectorAll("#fila-lista .fila__item"))
             .filter(function (b) { return /Helena/.test(b.textContent); })[0];
           volta.click();
@@ -479,9 +547,9 @@
         }
         return;
       }
-      if (fase === 5) {
+      if (fase === 6) {
         /* paciente de volta com estado preservado; agora o reinício */
-        fase = 6;
+        fase = 7;
         try {
           posVolta(fc, fd);
           check(!!fd.getElementById("btn-reiniciar"),
