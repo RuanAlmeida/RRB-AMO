@@ -124,6 +124,9 @@ captura móvel usam um iframe de 390px.
 O roteiro de 3 minutos, amarrado critério a critério às telas, está em
 `docs/roteiro-do-pitch.md`.
 
+A matriz de aderência — cada critério da especificação mapeado para o arquivo,
+o teste e a captura que o provam — está em `docs/matriz-de-aderencia.md`.
+
 ## Estrutura
 
 ```
