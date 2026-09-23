@@ -221,6 +221,13 @@ button {
   gap: 8px;
 }
 
+/* aviso de liberação do botão de finalizar na barra lateral */
+.finalizar-aviso {
+  margin-top: 8px;
+  font-size: var(--t-3);
+  color: var(--muted);
+}
+
 .sidebar__rodape {
   margin-top: auto;
   display: flex;

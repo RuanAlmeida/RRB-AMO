@@ -19,6 +19,7 @@ CM.ui.retorno = (function () {
   ];
 
   let validado = false;
+  let enviado = null;   /* hora em que o WhatsApp foi aberto com o texto */
   let entradas = [];
 
   /* ---------------- Montagem do resumo ---------------- */
@@ -72,8 +73,14 @@ CM.ui.retorno = (function () {
 
     etapas.forEach(function (li) { li.className = "etapa"; });
 
-    if (validado) {
+    if (validado && enviado) {
       etapas.forEach(function (li) { li.classList.add("etapa--concluido"); });
+      return;
+    }
+    if (validado) {
+      etapas[0].classList.add("etapa--concluido");
+      etapas[1].classList.add("etapa--concluido");
+      etapas[2].classList.add("etapa--ativo");
       return;
     }
     if (texto) {
@@ -87,14 +94,18 @@ CM.ui.retorno = (function () {
   function atualizarStatus() {
     const selo = document.getElementById("retorno-status");
     const botao = document.getElementById("btn-validar");
-    if (validado) {
+    if (validado && enviado) {
+      selo.textContent = "Validado e enviado pelo WhatsApp às " + enviado;
+      selo.className = "selo selo--aceito";
+      botao.textContent = "Reabrir rascunho";
+    } else if (validado) {
       selo.textContent = "Validado, registro criado para envio assistido";
       selo.className = "selo selo--aceito";
       botao.textContent = "Reabrir rascunho";
     } else {
       selo.textContent = "Rascunho, não enviado";
       selo.className = "selo selo--pendente";
-      botao.textContent = "Validar e enviar";
+      botao.textContent = "Validar registro";
     }
     atualizarEtapas();
   }
@@ -130,6 +141,7 @@ CM.ui.retorno = (function () {
     CM.store.gravar("retorno", {
       texto: document.getElementById("retorno-texto").value,
       validado: validado,
+      enviado: enviado,
       revisao: document.getElementById("chk-revisao").checked,
       entradas: entradas
     });
@@ -140,6 +152,7 @@ CM.ui.retorno = (function () {
     if (!salvo || !salvo.texto) return false;
     document.getElementById("retorno-texto").value = salvo.texto;
     validado = !!salvo.validado;
+    enviado = salvo.enviado || null;
     document.getElementById("chk-revisao").checked = !!salvo.revisao;
     entradas = Array.isArray(salvo.entradas) ? salvo.entradas : [];
     renderLog();
@@ -151,6 +164,7 @@ CM.ui.retorno = (function () {
   function gerar(silencioso) {
     document.getElementById("retorno-texto").value = montarResumo();
     mostrarErro("");
+    enviado = null;   /* texto novo invalida qualquer envio anterior */
     if (validado) {
       validado = false;
       document.getElementById("chk-revisao").checked = false;
@@ -175,6 +189,7 @@ CM.ui.retorno = (function () {
   function onEdicao() {
     if (validado) {
       validado = false;
+      enviado = null;
       document.getElementById("chk-revisao").checked = false;
       registrar("Texto editado após validação; validação anterior anulada.");
       atualizarStatus();
@@ -188,6 +203,7 @@ CM.ui.retorno = (function () {
   function onValidar() {
     if (validado) {
       validado = false;
+      enviado = null;
       document.getElementById("chk-revisao").checked = false;
       registrar("Rascunho reaberto pelo profissional; registro de envio assistido desfeito.");
       atualizarStatus();
@@ -221,9 +237,9 @@ CM.ui.retorno = (function () {
     }
 
     const ok = window.confirm(
-      "Registrar validação e preparar envio assistido para " +
+      "Registrar a validação do resumo de " +
       CM.data.prontuario.nome_fictício +
-      "? O envio real de mensagem está fora desta demonstração."
+      "? Depois, use Enviar ao cliente para abrir o WhatsApp com o texto pronto."
     );
     if (!ok) return;
 
@@ -237,6 +253,29 @@ CM.ui.retorno = (function () {
     persistir();
   }
 
+  /* abre o WhatsApp com o texto pronto; o envio e a confirmação seguem
+     manuais, na conversa do profissional. Só libera após validação. */
+  function onEnviar() {
+    if (!validado) {
+      mostrarErro(
+        "Valide o registro antes de abrir o WhatsApp. O envio só libera depois da sua revisão."
+      );
+      return;
+    }
+    const texto = document.getElementById("retorno-texto").value.trim();
+    if (!texto) {
+      mostrarErro("Não há resumo para enviar.");
+      return;
+    }
+    window.open("https://wa.me/?text=" + encodeURIComponent(texto), "_blank", "noopener");
+    enviado = u().agora();
+    mostrarErro("");
+    registrar("WhatsApp aberto com o texto pronto. O envio e a confirmação seguem na sua conversa.");
+    atualizarStatus();
+    persistir();
+    document.dispatchEvent(new Event("cm:envio-alterado"));
+  }
+
   function init() {
     if (restaurar()) {
       atualizarStatus();
@@ -246,6 +285,7 @@ CM.ui.retorno = (function () {
     }
     document.getElementById("btn-gerar").addEventListener("click", onGerar);
     document.getElementById("btn-validar").addEventListener("click", onValidar);
+    document.getElementById("btn-enviar").addEventListener("click", onEnviar);
     document.getElementById("retorno-texto").addEventListener("input", onEdicao);
     document.getElementById("chk-revisao").addEventListener("change", persistir);
   }

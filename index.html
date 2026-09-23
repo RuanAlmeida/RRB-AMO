@@ -37,6 +37,7 @@
           <p class="contexto__aviso">Registro sintético, dado de demonstração</p>
         </div>
         <button class="btn btn--secundario" type="button" id="btn-finalizar">Finalizar e chamar próximo</button>
+        <p class="finalizar-aviso" id="finalizar-aviso" hidden>Envie o retorno para liberar a finalização.</p>
         <button class="btn btn--fantasma tema-btn" type="button" id="btn-tema">Usar modo escuro</button>
         <button class="btn btn--fantasma" type="button" id="btn-reiniciar">Reiniciar demonstração</button>
       </div>
@@ -98,7 +99,7 @@
           </li>
           <li class="etapa" data-etapa="3">
             <span class="etapa__num">3</span>
-            <span class="etapa__texto">Registro de envio assistido</span>
+            <span class="etapa__texto">Envio pelo WhatsApp</span>
           </li>
         </ol>
 
@@ -139,7 +140,8 @@
             <h2 class="painel__titulo">Validação do profissional</h2>
           </div>
           <p class="painel__nota">
-            Enviar sem revisão não existe aqui. Após validar, o registro fica preparado para o canal assistido, sem nada enviado automaticamente.
+            Valide o registro e use Enviar ao cliente: o WhatsApp abre com o texto pronto na sua conversa.
+            Nada sai desta tela sem a sua revisão.
           </p>
 
           <label class="checkbox">
@@ -148,7 +150,8 @@
           </label>
 
           <div class="acoes-painel">
-            <button class="btn btn--primario" type="button" id="btn-validar">Validar e enviar</button>
+            <button class="btn btn--primario" type="button" id="btn-validar">Validar registro</button>
+            <button class="btn btn--primario" type="button" id="btn-enviar">Enviar ao cliente</button>
           </div>
 
           <div class="guardrail">
@@ -165,8 +168,8 @@
         </section>
 
         <p class="nota-rodape">
-          Envio real por WhatsApp ou outro canal está fora do escopo desta demonstração,
-          documentado como pendência junto à conformidade LGPD.
+          Enviar ao cliente abre o WhatsApp com o texto do resumo. O envio e a confirmação seguem manuais,
+          na sua conversa: o sistema não envia nem acompanha a leitura. Conformidade LGPD segue documentada como pendência.
         </p>
       </section>
 

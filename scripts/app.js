@@ -128,12 +128,15 @@
 
   function renderFila() {
     const fila = dadosFila();
+    const ret = CM.store.ler("retorno");
+    const enviado = !!(ret && ret.enviado);
     document.getElementById("fila-lista").innerHTML = CM.data.prontuarios.map(function (pc) {
       const pid = pc.paciente_id;
       const atendido = fila.atendidos.indexOf(pid) >= 0;
       const atual = pid === fila.atual && !atendido;
       const nome = pc.nome_fictício.replace(/\s*\(fictíc\w+\)/, "");
-      const status = atendido ? "atendido" : (atual ? "em atendimento" : "aguardando");
+      const status = atendido ? "atendido"
+        : (atual ? (enviado ? "retorno enviado" : "em atendimento") : "aguardando");
       const tipo = atendido ? "atendido" : (atual ? "atendimento" : "aguardando");
       return "<li><button class=\"fila__item fila__item--" + tipo + (atual ? " fila__item--atual" : "") +
         "\" type=\"button\" data-pid=\"" + pid + "\"" + (atual ? " aria-current=\"true\"" : "") + ">" +
@@ -141,19 +144,24 @@
         "<span class=\"fila__status\">" + status + "</span></button></li>";
     }).join("");
 
+    /* liberação do próximo paciente: o atendimento só finaliza depois
+       que o retorno é enviado pelo próprio profissional */
     const restantes = CM.data.prontuarios.length - fila.atendidos.length;
     const btn = document.getElementById("btn-finalizar");
+    const aviso = document.getElementById("finalizar-aviso");
     if (restantes === 0) {
       btn.disabled = true;
       btn.textContent = "Fila concluída";
-    } else if (restantes === 1) {
-      btn.disabled = false;
-      btn.textContent = "Finalizar atendimento";
+      aviso.hidden = true;
     } else {
-      btn.disabled = false;
-      btn.textContent = "Finalizar e chamar próximo";
+      btn.textContent = restantes === 1 ? "Finalizar atendimento" : "Finalizar e chamar próximo";
+      btn.disabled = !enviado;
+      aviso.hidden = enviado;
     }
   }
+
+  /* o envio acontece dentro do módulo de retorno; a fila só reage */
+  document.addEventListener("cm:envio-alterado", renderFila);
 
   document.getElementById("btn-reiniciar").addEventListener("click", function () {
     const ok = window.confirm(

@@ -180,6 +180,9 @@
               filaItens[0] ? filaItens[0].textContent.replace(/\s+/g, " ").trim() : "fila vazia");
         check(!!d.getElementById("btn-finalizar"),
               "botão finalizar e chamar próximo está na barra lateral");
+        check(d.getElementById("btn-finalizar").disabled &&
+              !d.getElementById("finalizar-aviso").hidden,
+              "finalizar travado e aviso visível até o retorno ser enviado");
 
         /* ---------- Redação editável em cada cartão ---------- */
         var cardP = q(".insight--pendente");
@@ -237,6 +240,13 @@
         check(!err2.hidden, "validação exige revisão marcada pelo profissional",
               err2.textContent.slice(0, 80));
 
+        /* enviar só libera depois da validação explícita */
+        var abertos = [];
+        w.open = function (u) { abertos.push(u); return null; };
+        d.getElementById("btn-enviar").click();
+        check(abertos.length === 0 && !d.getElementById("retorno-erro").hidden,
+              "envio abre o WhatsApp só depois da validação");
+
         /* com revisão e clique explícito valida */
         d.getElementById("chk-revisao").checked = true;
         d.getElementById("btn-validar").click();
@@ -246,6 +256,25 @@
               "log deixa claro que nada foi enviado de verdade");
         check(/Reabrir rascunho/.test(d.getElementById("btn-validar").textContent),
               "validação pode ser desfeita pelo profissional");
+
+        /* ---------- Envio pelo WhatsApp (wa.me) ---------- */
+        d.getElementById("btn-enviar").click();
+        check(abertos.length === 1 && /^https:\/\/wa\.me\/\?text=/.test(abertos[0]),
+              "enviar ao cliente abre o WhatsApp com texto pronto (wa.me)",
+              abertos.length ? abertos[0].slice(0, 70) : "nada aberto");
+        check(abertos.length === 1 &&
+              decodeURIComponent(abertos[0]).indexOf("Resumo da consulta") >= 0,
+              "link do WhatsApp carrega o texto do resumo");
+        check(/enviado/.test(d.getElementById("retorno-status").textContent),
+              "status do retorno vira enviado com horário",
+              d.getElementById("retorno-status").textContent);
+        check(d.getElementById("retorno-log").textContent.indexOf("WhatsApp aberto com o texto pronto") >= 0,
+              "histórico registra a abertura do WhatsApp");
+        var chipAtual = q("#fila-lista .fila__item--atual .fila__status");
+        check(!!chipAtual && /enviado/.test(chipAtual.textContent),
+              "fila mostra o selo de retorno enviado");
+        check(!d.getElementById("btn-finalizar").disabled,
+              "envio libera o botão de finalizar o atendimento");
 
         /* ---------- Regras transversais ---------- */
         var botoes = qa("#tela-analise button, #tela-retorno button")
@@ -302,6 +331,8 @@
       check(!!q(".insight--aceito .insight__titulo") &&
             q(".insight--aceito .insight__titulo").textContent.indexOf("Redação corrigida") >= 0,
             "edição de redação sobrevive ao recarregamento");
+      check(/enviado/.test(d.getElementById("retorno-status").textContent),
+            "envio do retorno sobrevive ao recarregamento");
     }
 
     var finalizado = false;
