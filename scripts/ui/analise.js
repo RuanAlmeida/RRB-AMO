@@ -60,12 +60,10 @@ CM.ui.analise = (function () {
 
     document.getElementById("painel-prontuario").innerHTML =
       '<div class="painel__cabecalho">' +
-        '<h2 class="painel__titulo">Prontuário sintético</h2>' +
-        '<span class="selo">Dado sintético</span>' +
+        '<h2 class="painel__titulo">Prontuário</h2>' +
       "</div>" +
-      '<p class="painel__nota">Registro de demonstração usado no cruzamento. Nenhum campo veio de prontuário real.</p>' +
       '<dl class="ficha">' +
-        "<dt>Paciente</dt><dd>" + u().esc(p.nome_fictício) + ", " + u().esc(p.paciente_id) + "</dd>" +
+        "<dt>Paciente</dt><dd>" + u().esc(p.nome) + ", " + u().esc(p.paciente_id) + "</dd>" +
         '<dt>Idade</dt><dd class="num">' + p.idade + " anos</dd>" +
         "<dt>Atendimento</dt><dd>" + u().esc(p.atendimento) + ", " + u().esc(p.unidade) + "</dd>" +
         '<dt>Data da consulta</dt><dd class="num">' + u().dataBR(p.data_consulta) + "</dd>" +
@@ -561,7 +559,7 @@ CM.ui.analise = (function () {
   function blocoOrigem(item) {
     if (!item.origem) return "";
     return '<blockquote class="citacao">“' + u().esc(item.origem.texto) + "”</blockquote>" +
-      '<p class="fonte__detalhe">Transcrição simulada, ' + u().esc(item.origem.timestamp) +
+      '<p class="fonte__detalhe">Transcrição, ' + u().esc(item.origem.timestamp) +
       ", " + u().esc(u().FALANTES[item.origem.falante]) + "</p>";
   }
 

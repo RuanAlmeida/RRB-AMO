@@ -1,6 +1,6 @@
 /* Motor de pontos de atenção.
    Regra de ouro: toda sugestão precisa de apoio rastreável, seja no
-   prontuário sintético, seja em documento da base controlada. Sem apoio
+   caso, seja no prontuário, seja em documento da base controlada. Sem apoio
    suficiente, o ponto nasce bloqueado e vai para revisão humana.
    Nada aqui gera diagnóstico, prescrição ou orientação ao paciente. */
 window.CM = window.CM || {};

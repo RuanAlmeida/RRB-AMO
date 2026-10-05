@@ -43,12 +43,12 @@ CM.ui.retorno = (function () {
       revisados.push(e.tipo + ": " + e.resultado + " (" + u().dataBR(e.data) + ", " + e.fonte + ")");
     });
 
-    let texto = "Resumo da consulta de " + u().dataBR(p.data_consulta) + " (dado sintético)\n\n" +
-      p.nome_fictício + ", " + p.idade + " anos, " +
+    let texto = "Resumo da consulta de " + u().dataBR(p.data_consulta) + "\n\n" +
+      p.nome + ", " + p.idade + " anos, " +
       p.atendimento.toLowerCase() + " na " + p.unidade + ".\n\n" +
       "Relatos desta consulta\n" +
       relatos.map(function (r) { return "- " + r; }).join("\n") + "\n\n" +
-      "Revisado no prontuário sintético\n" +
+      "Revisado no prontuário\n" +
       revisados.map(function (r) { return "- " + r; }).join("\n") + "\n\n" +
       "Pontos de atenção aceitos nesta sessão\n";
 
@@ -60,7 +60,7 @@ CM.ui.retorno = (function () {
 
     texto += "Próximo passo combinado\n" +
       "Retorno presencial para revisão do plano em conjunto, com qualquer mudança decidida em consulta, por você.\n\n" +
-      "Resumo informativo gerado com dados sintéticos. Não recomenda medicamento nem conduta.";
+      "Resumo informativo. Não recomenda medicamento nem conduta.";
 
     return texto;
   }
@@ -238,7 +238,7 @@ CM.ui.retorno = (function () {
 
     const ok = window.confirm(
       "Registrar a validação do resumo de " +
-      CM.data.prontuario.nome_fictício +
+      CM.data.prontuario.nome +
       "? Depois, use Enviar ao cliente para abrir o WhatsApp com o texto pronto."
     );
     if (!ok) return;

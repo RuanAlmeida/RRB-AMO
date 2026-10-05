@@ -1,4 +1,4 @@
-/* Base controlada — índice pequeno de documentos sintéticos.
+/* Base controlada — índice pequeno de documentos de exemplo.
    É esta base que o motor de recuperação consulta para sustentar
    (ou recusar) cada ponto de atenção. */
 window.CM = window.CM || {};
@@ -9,7 +9,7 @@ CM.data.baseControlada = [
   {
     id: "BC-001",
     titulo: "Dor torácica de esforço na atenção primária",
-    org: "Protocolo sintético da rede modelo",
+    org: "Protocolo da rede modelo",
     versao: "v3",
     data: "2026-04-02",
     trechos: [
@@ -22,7 +22,7 @@ CM.data.baseControlada = [
   {
     id: "BC-002",
     titulo: "Hemoglobina glicada em diabetes tipo 2 em tratamento",
-    org: "Protocolo sintético da rede modelo",
+    org: "Protocolo da rede modelo",
     versao: "v2",
     data: "2026-02-10",
     trechos: [
@@ -35,7 +35,7 @@ CM.data.baseControlada = [
   {
     id: "BC-003",
     titulo: "LDL colesterol após síndrome coronariana aguda",
-    org: "Protocolo sintético da rede modelo",
+    org: "Protocolo da rede modelo",
     versao: "v1",
     data: "2025-12-05",
     trechos: [
@@ -47,7 +47,7 @@ CM.data.baseControlada = [
   {
     id: "BC-004",
     titulo: "Adesão a medicamentos cardiovasculares",
-    org: "Protocolo sintético da rede modelo",
+    org: "Protocolo da rede modelo",
     versao: "v2",
     data: "2026-01-15",
     trechos: [
@@ -60,7 +60,7 @@ CM.data.baseControlada = [
   {
     id: "BC-005",
     titulo: "Chás e plantas medicinais junto com anti-hipertensivos",
-    org: "Protocolo sintético da rede modelo",
+    org: "Protocolo da rede modelo",
     versao: "v1",
     data: "2025-10-20",
     trechos: [
@@ -72,7 +72,7 @@ CM.data.baseControlada = [
   {
     id: "BC-006",
     titulo: "Comparação de exames seriados em atenção primária",
-    org: "Protocolo sintético da rede modelo",
+    org: "Protocolo da rede modelo",
     versao: "v1",
     data: "2026-03-30",
     trechos: [

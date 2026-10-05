@@ -73,7 +73,7 @@ recarrega o nginx e valida `GET /` e `GET /gestao/` (espera 200 nos dois).
 
 - `http://<IP>/` abre o app do medico no modo escuro, com a fila
   Helena / Giovani / Tereza e as tres telas (analise, retorno, dashboard).
-- `http://<IP>/gestao/` abre o dashboard com selos de "Simulado".
+- `http://<IP>/gestao/` abre o dashboard da rede.
 - Opcional: `http://<IP>/testes/smoke.html` roda a suite de 100 verificacoes no
   navegador (util para o jurado ver que o codigo publicado e o testado).
 

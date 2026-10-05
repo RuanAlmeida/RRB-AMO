@@ -36,7 +36,7 @@ CM.util = (function () {
   };
 
   const TIPOS_FONTE = {
-    prontuario: "Prontuário sintético",
+    prontuario: "Prontuário",
     base_controlada: "Base controlada"
   };
 

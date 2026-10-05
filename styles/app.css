@@ -259,13 +259,6 @@ button {
   color: var(--muted);
 }
 
-.contexto__aviso {
-  font-size: var(--t-1);
-  color: var(--amber);
-  margin-top: 8px;
-  font-weight: 500;
-}
-
 .principal {
   margin-left: var(--sidebar-largura);
   padding: 32px;
@@ -449,12 +442,6 @@ button {
   color: var(--muted);
   background: var(--bg);
   border-color: var(--line);
-}
-
-.selo--simulado {
-  color: var(--amber);
-  background: var(--amber-bg);
-  border-color: var(--amber);
 }
 
 /* ---------------------------- Prontuário e transcrição ---------------------------- */
@@ -736,7 +723,7 @@ button {
 
 /* ---------------------------- Dashboard ---------------------------- */
 
-.aviso-simulado {
+.aviso-leitura {
   background: var(--amber-bg);
   border: 1px solid var(--amber);
   border-radius: var(--raio-painel);
@@ -746,13 +733,13 @@ button {
   max-width: var(--area-largura);
 }
 
-.aviso-simulado__titulo {
+.aviso-leitura__titulo {
   font-weight: 600;
   color: var(--amber);
   margin-bottom: 4px;
 }
 
-.aviso-simulado p + p {
+.aviso-leitura p + p {
   color: var(--ink);
   max-width: var(--largura-leitura);
 }

@@ -1,7 +1,7 @@
 /* Tela 2 — Dashboard populacional.
-   Todo número exibido aqui carrega rótulo visível de simulado e a
-   amostra sintética que o sustenta. Nenhum elemento desta tela aciona
-   ação automática: dashboard informa, humano decide. */
+   Todo número exibido aqui traz a amostra e o período que o sustentam.
+   Nenhum elemento desta tela aciona ação automática: dashboard informa,
+   humano decide. */
 window.CM = window.CM || {};
 CM.ui = CM.ui || {};
 
@@ -14,7 +14,6 @@ CM.ui.dashboard = (function () {
       return '<article class="kpi">' +
         '<div class="kpi__linha">' +
           '<span class="kpi__valor">' + u().esc(k.valor) + "</span>" +
-          '<span class="selo selo--simulado">Simulado</span>' +
         "</div>" +
         '<p class="kpi__rotulo">' + u().esc(k.rotulo) + "</p>" +
         '<p class="kpi__base">Base: ' + u().esc(k.base) + ", " + u().esc(k.periodo) + "</p>" +
@@ -35,7 +34,7 @@ CM.ui.dashboard = (function () {
     const y = function (v) { return m.top + ih - (v / maximo) * ih; };
 
     let s = '<svg viewBox="0 0 ' + W + " " + H + '" role="img" aria-label="' +
-      u().esc("Gráfico de linha dos exames recebidos por mês em 2026, dado sintético, de 380 em janeiro a 588 em agosto.") + '">';
+      u().esc("Gráfico de linha dos exames recebidos por mês em 2026, de 380 em janeiro a 588 em agosto.") + '">';
 
     ticks.forEach(function (t) {
       const yy = y(t);
@@ -55,7 +54,7 @@ CM.ui.dashboard = (function () {
 
     serie.pontos.forEach(function (p, i) {
       s += '<circle class="serie-ponto" cx="' + x(i) + '" cy="' + y(p.valor) + '" r="4">' +
-        "<title>" + u().esc(p.rotulo + ": " + p.valor + " exames, valor simulado") + "</title></circle>";
+        "<title>" + u().esc(p.rotulo + ": " + p.valor + " exames") + "</title></circle>";
       s += '<text class="serie-valor" x="' + x(i) + '" y="' + (y(p.valor) - 12) + '" text-anchor="middle">' + p.valor + "</text>";
     });
 
@@ -68,21 +67,18 @@ CM.ui.dashboard = (function () {
   function renderSerie() {
     const serie = CM.data.dashboard.serie;
     document.getElementById("serie-nota").textContent =
-      "Série sintética criada para a demonstração, com eixos rotulados. " +
-      "Nenhum ponto da curva representa rede real.";
+      "Série com eixos rotulados e valores agregados por mês, de janeiro a agosto de 2026.";
     document.getElementById("grafico").innerHTML = svgGrafico(serie);
     document.getElementById("serie-legenda").textContent =
       "Eixo X: " + serie.eixo_x + ". Eixo Y: " + serie.eixo_y +
-      ". Amostra: " + serie.base + ", " + serie.periodo +
-      ". Todos os valores são simulados.";
+      ". Amostra: " + serie.base + ", " + serie.periodo + ".";
   }
 
   function renderTabela() {
     const linhas = CM.data.dashboard.tabela.map(function (l) {
       return "<tr>" +
         "<td>" + u().esc(l.indicador) + "</td>" +
-        '<td class="num"><strong>' + u().esc(l.valor) + "</strong> " +
-          '<span class="selo selo--simulado">Simulado</span></td>' +
+        '<td class="num"><strong>' + u().esc(l.valor) + "</strong></td>" +
         '<td class="num">' + u().esc(l.amostra) + "</td>" +
         '<td class="leitura">' + u().esc(l.leitura) + "</td>" +
       "</tr>";

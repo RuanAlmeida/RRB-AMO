@@ -105,7 +105,7 @@ barra lateral, como em toda a aplicação, segue com a fila e o paciente em
 atendimento. (`https://ruanalmeida.github.io/RRB-AMO/gestao/` segue no ar como
 página própria para o público de coordenação, sem fila nem paciente.)
 
-> "Todo número traz selo visível de 'Simulado' e a base que o sustenta. O
+> "Todo número traz a base que o sustenta. O
 > gráfico tem eixos rotulados, a tabela tem coluna de leitura interpretativa,
 > e esta tela não tem um único botão de ação — ela informa, a gestão decide."
 
@@ -115,8 +115,8 @@ Capturas: `docs/tela-dashboard-claro.png` e `docs/tela-dashboard-escuro.png`.
 
 > "Três limites provados ao vivo: fonte rastreável em cada sugestão, bloqueio
 > quando a evidência falta e validação obrigatória — o WhatsApp só abre
-> depois dela. Fila de três pacientes, estado por paciente, dados 100%
-> sintéticos. As pendências — envio programático, LGPD, integração com
+> depois dela. Fila de três pacientes, estado por paciente, nenhum dado de
+> paciente real. As pendências — envio programático, LGPD, integração com
 > prontuário — estão no README, declaradas, sem promessa fantasma."
 
 ## Frases de segurança (nunca diga)
@@ -125,7 +125,7 @@ Capturas: `docs/tela-dashboard-claro.png` e `docs/tela-dashboard-escuro.png`.
   Diga sempre: "sugeriu ponto de atenção para revisão humana".
 - Nunca: "o sistema enviou a mensagem". Diga: "abriu o WhatsApp com o texto
   pronto; quem envia e confirma é o profissional".
-- Nunca: trate os números do dashboard como reais — são simulados, com amostra
-  sintética declarada na própria tela, e a tela é da gestão, não do médico.
+- Nunca: trate os números do dashboard como reais — são números de exemplo, com
+  amostra declarada na própria tela, e a tela é da gestão, não do médico.
 - Se perguntarem de LGPD/auth: "fora do escopo do hackathon, documentado como
   pendência no README" — não invente conformidade.

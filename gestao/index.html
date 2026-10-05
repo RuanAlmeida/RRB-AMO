@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Análise Preditiva da Rede — Copiloto de Gestão</title>
-  <meta name="description" content="Análise preditiva populacional para coordenação e diretoria. Números sintéticos, sem ação automática.">
+  <meta name="description" content="Análise preditiva populacional para coordenação e diretoria. Sem ação automática.">
   <link rel="stylesheet" href="../styles/fontes.css">
   <link rel="stylesheet" href="../styles/tokens.css">
   <link rel="stylesheet" href="../styles/app.css">
@@ -22,7 +22,6 @@
         <p class="contexto__titulo">Perfil de acesso</p>
         <p class="contexto__nome">Coordenação</p>
         <p class="contexto__meta">Leitura populacional, sem dado de paciente</p>
-        <p class="contexto__aviso">Registro sintético, dado de demonstração</p>
       </div>
 
       <div class="sidebar__rodape">
@@ -36,17 +35,16 @@
         <header class="tela__cabecalho">
           <h1 class="tela__titulo">Dashboard populacional</h1>
           <p class="tela__contexto">
-            Agrega exames e consultas recebidos na rede sintética de demonstração.
+            Agrega exames e consultas recebidos na rede.
             Serve para leitura de gestão, nunca para decidir conduta de paciente.
           </p>
         </header>
 
-        <div class="aviso-simulado" role="note">
-          <p class="aviso-simulado__titulo">Números simulados, uso ilustrativo.</p>
+        <div class="aviso-leitura" role="note">
+          <p class="aviso-leitura__titulo">Leitura informa, decisão humana.</p>
           <p>
-            Todos os valores desta tela vêm de registros sintéticos criados para a demonstração.
-            Nenhum número representa paciente real e nenhum elemento desta tela aciona ação
-            automática: o dashboard informa, a decisão é de quem lê.
+            Nenhum elemento desta tela aciona ação automática: o dashboard informa,
+            a decisão é de quem lê.
           </p>
         </div>
 
@@ -55,7 +53,6 @@
         <section class="painel" aria-label="Série temporal de exames">
           <div class="painel__cabecalho">
             <h2 class="painel__titulo">Exames recebidos por mês</h2>
-            <span class="selo selo--simulado">Série sintética</span>
           </div>
           <p class="painel__nota" id="serie-nota"></p>
           <div class="grafico" id="grafico"></div>
@@ -65,7 +62,6 @@
         <section class="painel" aria-label="Tabela de leitura para gestão">
           <div class="painel__cabecalho">
             <h2 class="painel__titulo">Leitura para gestão</h2>
-            <span class="selo selo--simulado">Valores simulados</span>
           </div>
           <p class="painel__nota">
             A coluna de leitura interpretativa existe porque o valor do dashboard é apoiar
@@ -77,8 +73,8 @@
         </section>
 
         <p class="nota-rodape">
-          Dados de demonstração, sem qualquer vínculo com prontuário real. Alteração de escala,
-          equipe ou agenda não acontece por esta tela: quem decide é a gestão, com registro.
+          Alteração de escala, equipe ou agenda não acontece por esta tela: quem decide é a
+          gestão, com registro.
         </p>
       </section>
 

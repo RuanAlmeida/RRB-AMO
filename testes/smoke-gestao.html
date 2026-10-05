@@ -52,15 +52,18 @@
 
         /* ---------- conteúdo herdado do dashboard ---------- */
         var kpis = qa("#kpis .kpi");
-        var selos = qa("#kpis .selo--simulado");
         check(kpis.length === 4, "4 cartões de KPI", "n=" + kpis.length);
-        check(selos.length === kpis.length && kpis.length > 0,
-              "todo número de KPI tem selo visível de simulado", "selos=" + selos.length);
+        var valores = qa("#kpis .kpi__valor");
+        check(valores.length === kpis.length && kpis.length > 0 &&
+              valores.every(function (v) { return v.textContent.trim().length > 0; }),
+              "todo número de KPI mostra valor visível", "valores=" + valores.length);
         var bases = qa("#kpis .kpi__base");
         check(bases.length === kpis.length &&
-              bases.every(function (b) { return /Base:.*registros sintéticos/.test(b.textContent); }),
-              "todo KPI mostra a amostra sintética que o sustenta", "bases=" + bases.length);
-        check(!!q("#tela-dashboard .aviso-simulado"), "tela tem aviso proeminente de número simulado");
+              bases.every(function (b) { return /Base:.*registros de/.test(b.textContent); }),
+              "todo KPI mostra a amostra que o sustenta", "bases=" + bases.length);
+        var aviso = q("#tela-dashboard .aviso-leitura");
+        check(!!aviso && /decisão é de quem lê/.test(aviso.textContent),
+              "tela declara que o dashboard informa e a decisão é humana");
 
         var svg = q("#grafico svg");
         check(!!svg, "gráfico de série temporal renderizado");

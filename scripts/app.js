@@ -40,7 +40,7 @@
 
   function preencherContexto() {
     const p = CM.data.prontuario;
-    document.getElementById("ctx-nome").textContent = p.nome_fictício;
+    document.getElementById("ctx-nome").textContent = p.nome;
     document.getElementById("ctx-meta").textContent =
       p.paciente_id + ", " + p.idade + " anos, consulta de " + CM.util.dataBR(p.data_consulta);
   }
@@ -56,7 +56,7 @@
   document.getElementById("btn-tema").addEventListener("click", alternarTema);
 
   /* ---------------- Fila de triagem ----------------
-     Três pacientes sintéticos. Ao finalizar, o estado do paciente atual
+     Três casos de exemplo. Ao finalizar, o estado do paciente atual
      é guardado sob atendimentos[pid] e o próximo entra no lugar; tudo
      sobrevive ao F5 porque vive no localStorage do produto. */
   function dadosFila() {
@@ -134,7 +134,7 @@
       const pid = pc.paciente_id;
       const atendido = fila.atendidos.indexOf(pid) >= 0;
       const atual = pid === fila.atual && !atendido;
-      const nome = pc.nome_fictício.replace(/\s*\(fictíc\w+\)/, "");
+      const nome = pc.nome;
       const status = atendido ? "atendido"
         : (atual ? (enviado ? "retorno enviado" : "em atendimento") : "aguardando");
       const tipo = atendido ? "atendido" : (atual ? "atendimento" : "aguardando");
@@ -179,7 +179,7 @@
     if (pid === dadosFila().atual) return;
     const pc = CM.data.prontuarios.filter(function (x) { return x.paciente_id === pid; })[0];
     const ok = window.confirm(
-      "Trocar para " + (pc ? pc.nome_fictício : pid) +
+      "Trocar para " + (pc ? pc.nome : pid) +
       "? O estado atual fica salvo e você pode voltar depois."
     );
     if (ok) trocarPara(pid);
@@ -189,7 +189,7 @@
     const fila = dadosFila();
     const pc = CM.data.prontuarios.filter(function (x) { return x.paciente_id === fila.atual; })[0];
     const ok = window.confirm(
-      "Finalizar o atendimento de " + (pc ? pc.nome_fictício : "paciente atual") +
+      "Finalizar o atendimento de " + (pc ? pc.nome : "paciente atual") +
       "? O estado fica salvo e o próximo paciente entra na fila."
     );
     if (!ok) return;

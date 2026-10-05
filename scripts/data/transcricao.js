@@ -1,5 +1,6 @@
-/* Transcrições simuladas — gravações fictícias de consulta, alinhadas por
-   índice a CM.data.prontuarios (mesma ordem: Helena, Giovani, Tereza). */
+/* Transcrições de exemplo — gravações de consulta montadas para o
+   protótipo, alinhadas por índice a CM.data.prontuarios (mesma ordem:
+   Helena, Giovani, Tereza). */
 window.CM = window.CM || {};
 
 CM.data = CM.data || {};

@@ -3,7 +3,7 @@
 Copiloto de apoio à decisão em atenção primária construído para o desafio 4 do
 Hack Inova Health AI (Universidade Anhembi Morumbi, 22–23/09/2026).
 
-Cruza **prontuário sintético** e **transcrição simulada** com uma **base controlada**,
+Cruza **prontuário** e **transcrição da consulta** com uma **base controlada**,
 mostra pontos de atenção com **fonte rastreável**, permite **aceitar, ignorar ou
 reescrever** cada um e **bloqueia sugestões sem evidência suficiente**, encaminhando
 para revisão humana. O retorno ao paciente só sai do rascunho com validação
@@ -78,7 +78,7 @@ de rede.
 |---|---|---|
 | `#analise` | Análise da consulta | Fila de 3 pacientes; transcrição por **ditado ao vivo** (Falar agora ou Ctrl+Shift+Espaço → etapa "Transcrição concluída" → **Organizar em partes** → Usar esta transcrição), com exemplo pronto e colagem discreta como alternativa; prontuário + transcrição viram pontos de atenção com fonte rastreável (7 para Helena, 3 para Giovani e Tereza); o caso sem evidência fica bloqueado com motivo e vai para revisão humana; todo cartão tem **Editar** |
 | `#retorno` | Retorno ao paciente | Resumo editável em três etapas: rascunho, **Validar registro** (revisão marcada + clique, com validador de dose/prescrição/conduta) e **Enviar ao cliente**, que abre o WhatsApp com o texto pronto (`wa.me`) e grava o horário; **Finalizar e chamar próximo** só libera depois do envio |
-| `#dashboard` | Dashboard da rede | A tela de gestão dentro do app do médico: todo número com selo visível de "Simulado" e a amostra que o sustenta; gráfico com eixos rotulados; tabela com coluna de leitura interpretativa; zero botões de ação; nenhum dado de paciente |
+| `#dashboard` | Dashboard da rede | A tela de gestão dentro do app do médico: todo número com a amostra e o período que o sustenta; gráfico com eixos rotulados; tabela com coluna de leitura interpretativa; zero botões de ação; nenhum dado de paciente |
 
 ### App de gestão (`/gestao/`, página própria)
 
@@ -92,8 +92,8 @@ horizontalmente dentro do painel (`styles/app.css`, seção Responsivo).
 
 ## Fila de triagem
 
-Três pacientes sintéticos em sequência: **Helena Martins** (PAC-SINT-0042),
-**Giovani Ribeiro** (PAC-SINT-0043) e **Tereza Campos** (PAC-SINT-0044). Cada um
+Três pacientes em sequência: **Helena Martins** (PAC-0042),
+**Giovani Ribeiro** (PAC-0043) e **Tereza Campos** (PAC-0044). Cada um
 tem seu próprio conjunto de regras disparadas, transcrição em uso, marcações,
 redação corrigida, resumo e histórico — nada vaza de um para o outro.
 **Finalizar e chamar próximo** conclui o atendimento atual e traz o seguinte; o
@@ -111,7 +111,7 @@ regras (scripts/engine/insights.js)
         │
         ▼
 recuperação na base controlada (scripts/engine/rag.js)
-  · índice de 6 documentos sintéticos, escore de cobertura por IDF
+  · índice de 6 documentos da base controlada, escore de cobertura por IDF
   · limiar 0,28 (CM.rag.LIMIAR)
         │
    ┌────┴─────┐
@@ -222,7 +222,7 @@ docs/                         8 capturas + roteiro + matriz de aderência
 
 ## Dados
 
-Todos os dados são sintéticos e identificados como tal na interface:
-`PAC-SINT-0042/0043/0044`, laudos `LAB-SINT-*`, UBS Modelo e profissionais
-fictícios. Nenhum arquivo contém dado de paciente real. O app de gestão não
-carrega os dados de paciente — só os agregados sintéticos do dashboard.
+Os dados exibidos são de demonstração e vêm apenas dos arquivos do
+repositório: casos `PAC-0042/0043/0044`, laudos `LAB-*`, UBS Modelo e
+profissionais de exemplo. Nenhum arquivo contém dado de paciente real. O app de
+gestão não carrega os dados de paciente — só os agregados do dashboard.
